@@ -6,6 +6,7 @@ import TendencyBadge from '../components/TendencyBadge';
 import TalkWriteModal from '../components/TalkWriteModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { getDistanceKm } from '../utils/geolocation';
 
 interface TalkPost {
   id: string;
@@ -22,13 +23,11 @@ interface TalkPost {
 }
 
 const subTabs = ['전체', '지역', '등네', '근처', '내토크'];
-const distanceFilters = ['전체', '10km', '20km', '50km'];
 
 export default function TalkPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('전체');
-  const [distanceFilter, setDistanceFilter] = useState('전체');
   const [posts, setPosts] = useState<TalkPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWriteModal, setShowWriteModal] = useState(false);
@@ -38,17 +37,12 @@ export default function TalkPage() {
     try {
       setLoading(true);
 
-      // 1. Load posts
+      // 1. Load posts (내토크만 서버 필터, 나머지는 전체 로드 후 거리 필터)
       let query = supabase
         .from('talk_posts')
         .select('*');
 
-      // Filter by tab
-      if (activeTab === '지역') {
-        query = query.eq('category', '지역');
-      } else if (activeTab === '등네') {
-        query = query.eq('category', '등네');
-      } else if (activeTab === '내토크') {
+      if (activeTab === '내토크') {
         query = query.eq('user_id', currentUser?.id);
       }
 
@@ -64,11 +58,24 @@ export default function TalkPage() {
       // 2. Get unique user IDs from posts
       const userIds = [...new Set(postsData.map(p => p.user_id))];
 
-      // 3. Load profiles for those users
+      // 3. Load profiles for those users (including coordinates)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, nickname, age, tendency, gender')
+        .select('id, nickname, age, tendency, gender, latitude, longitude')
         .in('id', userIds);
+
+      // 3.5. Load current user's coordinates
+      let myLat: number | null = null;
+      let myLng: number | null = null;
+      if (currentUser) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('latitude, longitude')
+          .eq('id', currentUser.id)
+          .single();
+        myLat = myProfile?.latitude ?? null;
+        myLng = myProfile?.longitude ?? null;
+      }
 
       if (profilesError) throw profilesError;
 
@@ -90,7 +97,9 @@ export default function TalkPage() {
           user_age: profile?.age || 0,
           user_tendency: profile?.tendency || 'S',
           user_gender: profile?.gender || '',
-          distance_km: Math.random() * 50 + 0.1,
+          distance_km: (myLat && myLng && profile?.latitude && profile?.longitude)
+            ? getDistanceKm(myLat, myLng, profile.latitude, profile.longitude)
+            : 999,
         };
       });
 
@@ -110,19 +119,15 @@ export default function TalkPage() {
 
   const handleTabSelect = (tab: string) => {
     setActiveTab(tab);
-    setDistanceFilter('전체'); // Reset distance filter when changing tabs
   };
 
-  const parseDistance = (d: string) => parseFloat(d.replace('km', ''));
-
-  // Filter posts
-  const filteredPosts = activeTab === '근처'
-    ? posts.filter(post => {
-        if (distanceFilter === '전체') return true;
-        const maxDist = parseDistance(distanceFilter);
-        return post.distance_km <= maxDist;
-      })
-    : posts;
+  // Filter posts by distance based on tab
+  const filteredPosts = (() => {
+    if (activeTab === '지역') return posts.filter(p => p.distance_km <= 50);
+    if (activeTab === '등네') return posts.filter(p => p.distance_km <= 20);
+    if (activeTab === '근처') return posts.filter(p => p.distance_km <= 10);
+    return posts; // 전체, 내토크
+  })();
 
   const getTimeAgo = (date: string): string => {
     const now = new Date();
@@ -132,10 +137,10 @@ export default function TalkPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return '방금';
-    if (diffMins < 60) return `${diffMins}분`;
-    if (diffHours < 24) return `${diffHours}시간`;
-    if (diffDays < 7) return `${diffDays}일`;
+    if (diffMins < 1) return '방금 전';
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 30) return `${diffDays}일 전`;
     return then.toLocaleDateString('ko-KR');
   };
 
@@ -162,41 +167,6 @@ export default function TalkPage() {
         }
       />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={handleTabSelect} />
-
-      {/* Distance Filter for 근처 tab */}
-      {activeTab === '근처' && (
-        <div
-          style={{
-            padding: '12px 16px',
-            backgroundColor: 'rgba(20,20,20,0.95)',
-            backdropFilter: 'blur(10px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            display: 'flex',
-            gap: 6,
-          }}
-        >
-          {distanceFilters.map((d) => (
-            <button
-              key={d}
-              onClick={() => setDistanceFilter(d)}
-              style={{
-                flex: 1,
-                padding: '8px 0',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 600,
-                color: distanceFilter === d ? '#C9A96E' : '#777',
-                background: distanceFilter === d ? 'rgba(201,169,110,0.1)' : 'rgba(255,255,255,0.04)',
-                border: distanceFilter === d ? '1px solid rgba(201,169,110,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                transition: 'all 0.2s',
-                cursor: 'pointer',
-              }}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Posts List */}
       <div>

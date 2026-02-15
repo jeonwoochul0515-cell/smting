@@ -9,6 +9,7 @@ import TalkWriteModal from '../components/TalkWriteModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { calcMatchRate } from '../utils/matchAlgo';
+import { getDistanceKm } from '../utils/geolocation';
 
 interface UserProfile {
   id: string;
@@ -47,6 +48,8 @@ export default function NearbyPage() {
         setLoading(true);
 
         // 현재 사용자 프로필 불러오기
+        let myLat: number | null = null;
+        let myLng: number | null = null;
         if (user) {
           const { data: myData } = await supabase
             .from('profiles')
@@ -57,6 +60,8 @@ export default function NearbyPage() {
           if (myData) {
             setCurrentUserProfile(myData);
             setCai(myData.cai || 0);
+            myLat = myData.latitude ?? null;
+            myLng = myData.longitude ?? null;
             // 처음 로그인 후 토크 팝업 띄우기 (localStorage 체크)
             const hasSeenTalkModal = localStorage.getItem(`talk_modal_${user.id}`);
             if (!hasSeenTalkModal) {
@@ -74,10 +79,12 @@ export default function NearbyPage() {
 
         if (error) throw error;
 
-        // 거리 추가 (목데이터처럼 랜덤 거리)
+        // 거리 계산 (내 좌표와 상대방 좌표 기반)
         const usersWithDistance = (data || []).map(u => ({
           ...u,
-          distance_km: Math.random() * 50 + 0.1, // 0.1km ~ 50km
+          distance_km: (myLat && myLng && u.latitude && u.longitude)
+            ? getDistanceKm(myLat, myLng, u.latitude, u.longitude)
+            : 999,
         }));
 
         setUsers(usersWithDistance);

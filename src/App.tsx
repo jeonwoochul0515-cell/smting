@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { supabase } from './lib/supabase';
+import { getCurrentPosition } from './utils/geolocation';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 import LoadingScreen from './components/LoadingScreen';
@@ -47,6 +48,20 @@ function App() {
 
     checkProfile();
   }, [user]);
+
+  // 로그인 시 위치 저장
+  useEffect(() => {
+    if (!user || hasProfile !== true) return;
+    getCurrentPosition()
+      .then(({ latitude, longitude }) => {
+        supabase
+          .from('profiles')
+          .update({ latitude, longitude })
+          .eq('id', user.id)
+          .then(() => {});
+      })
+      .catch(() => {});
+  }, [user, hasProfile]);
 
   // 프로필 없으면 /register로 이동
   useEffect(() => {
