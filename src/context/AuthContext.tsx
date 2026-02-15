@@ -37,11 +37,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
     if (error) throw error;
+
+    // Check if email confirmation is required
+    if (data?.user && !data?.session) {
+      const confirmError = new Error('이메일 인증이 필요합니다. 이메일을 확인해주세요');
+      throw confirmError;
+    }
   };
 
   const signIn = async (email: string, password: string) => {

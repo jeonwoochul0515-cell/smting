@@ -25,7 +25,18 @@ export default function AuthPage() {
       }
       navigate('/permissions');
     } catch (err: any) {
-      setError(err.message || '오류가 발생했습니다');
+      let errorMessage = err.message || '오류가 발생했습니다';
+
+      // Better error messages
+      if (errorMessage.includes('Invalid login credentials')) {
+        errorMessage = '이메일 또는 비밀번호가 일치하지 않습니다';
+      } else if (errorMessage.includes('User already registered')) {
+        errorMessage = '이미 가입된 이메일입니다. 로그인해주세요';
+      } else if (errorMessage.includes('Email not confirmed')) {
+        errorMessage = '이메일 인증이 필요합니다. 이메일을 확인해주세요';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -200,7 +211,7 @@ export default function AuthPage() {
           </button>
 
           {/* Toggle Sign Up / Sign In */}
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
             <span style={{ fontSize: 13, color: '#777' }}>
               {isSignUp ? '이미 계정이 있으신가요? ' : '계정이 없으신가요? '}
             </span>
@@ -209,6 +220,8 @@ export default function AuthPage() {
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError('');
+                setEmail('');
+                setPassword('');
               }}
               style={{
                 fontSize: 13,
@@ -222,6 +235,21 @@ export default function AuthPage() {
             >
               {isSignUp ? '로그인' : '가입'}
             </button>
+          </div>
+
+          {/* Help Text */}
+          <div style={{
+            fontSize: 12,
+            color: '#777',
+            textAlign: 'center',
+            marginTop: 16,
+            lineHeight: 1.5,
+          }}>
+            {isSignUp ? (
+              <>새로운 계정을 만드시려면 <br /> 이메일과 비밀번호를 입력해주세요</>
+            ) : (
+              <>가입하신 이메일과 비밀번호로 <br /> 로그인해주세요</>
+            )}
           </div>
         </form>
       </div>
