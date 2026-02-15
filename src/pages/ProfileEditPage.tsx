@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency } from '../data/mockData';
 import Header from '../components/Header';
+import Icon from '../components/Icon';
 
 const avatarColors = ['#8B0000', '#A0153E', '#5C0029', '#2D033B', '#3D0C11', '#6B0848', '#4A0080', '#005C5C'];
 
@@ -165,7 +166,7 @@ export default function ProfileEditPage() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>{play.icon}</span>
+                  <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={18} color="currentColor" /></span>
                   <span>{play.name}</span>
                   {selected && <span style={{ marginLeft: 'auto', color: '#C9A96E', fontSize: 14 }}>✓</span>}
                 </button>
@@ -207,7 +208,7 @@ export default function ProfileEditPage() {
                     }}>{rankColors[idx].label}</span>
                     {play ? (
                       <>
-                        <span style={{ fontSize: 20 }}>{play.icon}</span>
+                        <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={20} color="#C9A96E" /></span>
                         <span style={{ fontSize: 11, fontWeight: 600, color: '#E8D5B0' }}>{play.name}</span>
                       </>
                     ) : (
@@ -241,7 +242,7 @@ export default function ProfileEditPage() {
                       transition: 'all 0.2s',
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>{play.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={18} color="currentColor" /></span>
                     <span style={{ fontWeight: 600 }}>{play.name}</span>
                     {isTop && (
                       <span style={{

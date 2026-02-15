@@ -4,6 +4,7 @@ import { users } from '../data/mockData';
 import Header from '../components/Header';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
+import Icon from '../components/Icon';
 
 export default function BlockListPage() {
   const navigate = useNavigate();
@@ -30,7 +31,9 @@ export default function BlockListPage() {
             padding: '60px 20px',
             color: '#555',
           }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔓</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <Icon name="lock" size={48} color="#555" />
+            </div>
             <p style={{ fontSize: 15 }}>차단한 사용자가 없습니다</p>
           </div>
         ) : (

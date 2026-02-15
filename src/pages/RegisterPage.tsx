@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency, Gender } from '../data/mockData';
+import Icon from '../components/Icon';
 
 const STEP_TITLES = ['기본 정보', '플레이 선택', '최애플 TOP 3'];
 
@@ -229,7 +230,7 @@ export default function RegisterPage() {
                       animation: `fadeIn 0.3s ease ${i * 0.03}s both`,
                     }}
                   >
-                    <span style={{ fontSize: 22 }}>{play.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={22} color="currentColor" /></span>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{play.name}</div>
                       <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{play.description}</div>
@@ -307,7 +308,7 @@ export default function RegisterPage() {
                     </span>
                     {play ? (
                       <>
-                        <span style={{ fontSize: 28 }}>{play.icon}</span>
+                        <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={28} color="#C9A96E" /></span>
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#E8D5B0' }}>{play.name}</span>
                       </>
                     ) : (
@@ -347,7 +348,7 @@ export default function RegisterPage() {
                       animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
                     }}
                   >
-                    <span style={{ fontSize: 22 }}>{play.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}><Icon name={play.icon} size={22} color="currentColor" /></span>
                     <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{play.name}</span>
                     {isTop && (
                       <span style={{

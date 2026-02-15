@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import Icon from './Icon';
 
 const tabs = [
-  { path: '/talk', label: '토크', icon: '💬' },
-  { path: '/nearby', label: '주변', icon: '👤' },
-  { path: '/theme', label: '테마', icon: '#' },
-  { path: '/messages', label: '쪽지', icon: '✉️' },
-  { path: '/more', label: '더보기', icon: '•••' },
+  { path: '/talk', label: '토크', icon: 'chat' },
+  { path: '/nearby', label: '주변', icon: 'person' },
+  { path: '/theme', label: '테마', icon: 'hash' },
+  { path: '/messages', label: '쪽지', icon: 'mail' },
+  { path: '/more', label: '더보기', icon: 'more' },
 ];
 
 export default function BottomNav() {
@@ -48,7 +49,7 @@ export default function BottomNav() {
               transition: 'color 0.2s',
             }}
           >
-            <span style={{ fontSize: 20, lineHeight: 1 }}>{tab.icon}</span>
+            <Icon name={tab.icon} size={20} color={isActive ? '#C9A96E' : '#555'} />
             <span style={{
               fontWeight: isActive ? 700 : 400,
               fontSize: 10,

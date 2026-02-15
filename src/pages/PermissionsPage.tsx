@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Icon from '../components/Icon';
 
 interface Permission {
   id: string;
@@ -12,14 +13,14 @@ interface Permission {
 const permissions: Permission[] = [
   {
     id: 'notification',
-    icon: '🔔',
+    icon: 'bell',
     title: '알림',
     description: '새로운 쪽지, 매칭 알림을 받을 수 있습니다',
     required: true,
   },
   {
     id: 'location',
-    icon: '📍',
+    icon: 'pin',
     title: '위치 정보',
     description: '주변 사용자를 찾기 위해 위치 정보가 필요합니다',
     required: true,
@@ -35,7 +36,6 @@ export default function PermissionsPage() {
 
   const requestPermission = (id: string) => {
     setRequesting(id);
-    // Simulate permission request
     setTimeout(() => {
       setGranted(prev => ({ ...prev, [id]: true }));
       setRequesting(null);
@@ -115,11 +115,13 @@ export default function PermissionsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 24,
                     flexShrink: 0,
                     transition: 'all 0.3s',
                   }}>
-                    {isGranted ? '✅' : perm.icon}
+                    {isGranted
+                      ? <Icon name="check" size={28} />
+                      : <Icon name={perm.icon} size={24} color="#C9A96E" />
+                    }
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>

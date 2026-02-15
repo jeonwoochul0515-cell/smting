@@ -1,15 +1,16 @@
 import Header from '../components/Header';
+import Icon from '../components/Icon';
 
 const themes = [
-  { id: 1, name: '본디지', icon: '🔗', count: 128, color: '#8B0000' },
-  { id: 2, name: '로프', icon: '🪢', count: 95, color: '#5C0029' },
-  { id: 3, name: '롤플레이', icon: '🎭', count: 203, color: '#4A0080' },
-  { id: 4, name: '페티쉬', icon: '👠', count: 167, color: '#2D033B' },
-  { id: 5, name: '디시플린', icon: '📏', count: 84, color: '#3D0C11' },
-  { id: 6, name: '센슈얼', icon: '🌹', count: 312, color: '#6B0848' },
-  { id: 7, name: '펨돔', icon: '👑', count: 76, color: '#005C5C' },
-  { id: 8, name: '스위치', icon: '🔄', count: 145, color: '#1A3A4A' },
-  { id: 9, name: '초보환영', icon: '🌱', count: 256, color: '#2A4A2A' },
+  { id: 1, name: '본디지', icon: 'link', count: 128, color: '#8B0000' },
+  { id: 2, name: '로프', icon: 'rope', count: 95, color: '#5C0029' },
+  { id: 3, name: '롤플레이', icon: 'theater', count: 203, color: '#4A0080' },
+  { id: 4, name: '페티쉬', icon: 'shoe', count: 167, color: '#2D033B' },
+  { id: 5, name: '디시플린', icon: 'ruler', count: 84, color: '#3D0C11' },
+  { id: 6, name: '센슈얼', icon: 'rose', count: 312, color: '#6B0848' },
+  { id: 7, name: '펨돔', icon: 'crown', count: 76, color: '#005C5C' },
+  { id: 8, name: '스위치', icon: 'swap', count: 145, color: '#1A3A4A' },
+  { id: 9, name: '초보환영', icon: 'sprout', count: 256, color: '#2A4A2A' },
 ];
 
 export default function ThemePage() {
@@ -46,7 +47,9 @@ export default function ThemePage() {
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 10 }}>{theme.icon}</div>
+              <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'center' }}>
+                <Icon name={theme.icon} size={32} color={theme.color} />
+              </div>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#eee' }}>{theme.name}</div>
               <div style={{ fontSize: 11, color: '#C9A96E' }}>{theme.count}명 참여중</div>
               <div style={{

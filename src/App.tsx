@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
+import SplashScreen from './components/SplashScreen';
 import LandingPage from './pages/LandingPage';
 import VerifyPage from './pages/VerifyPage';
 import PermissionsPage from './pages/PermissionsPage';
@@ -19,12 +21,16 @@ const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/
 
 function App() {
   const location = useLocation();
+  const [showSplash, setShowSplash] = useState(true);
+
   const isFullScreen = fullScreenPaths.includes(location.pathname)
     || location.pathname.startsWith('/chat/')
     || location.pathname.startsWith('/user/');
 
   return (
     <div>
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+
       {isFullScreen ? (
         <Routes>
           <Route path="/" element={<LandingPage />} />

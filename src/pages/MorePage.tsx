@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
+import Icon from '../components/Icon';
 
 const myProfile = {
   nickname: '나의프로필',
@@ -14,13 +15,13 @@ const myProfile = {
 };
 
 const menuItems = [
-  { label: '프로필 수정', icon: '✏️', path: '/profile/edit' },
-  { label: '성향 설정', icon: '⚙️', path: '/profile/edit' },
-  { label: '차단 관리', icon: '🚫', path: '/block-list' },
-  { label: '알림 설정', icon: '🔔', path: '' },
-  { label: '이용약관', icon: '📄', path: '' },
-  { label: '고객센터', icon: '💡', path: '' },
-  { label: '로그아웃', icon: '🚪', path: '/' },
+  { label: '프로필 수정', icon: 'edit', path: '/profile/edit' },
+  { label: '성향 설정', icon: 'settings', path: '/profile/edit' },
+  { label: '차단 관리', icon: 'ban', path: '/block-list' },
+  { label: '알림 설정', icon: 'bell', path: '' },
+  { label: '이용약관', icon: 'doc', path: '' },
+  { label: '고객센터', icon: 'help', path: '' },
+  { label: '로그아웃', icon: 'logout', path: '/' },
 ];
 
 export default function MorePage() {
@@ -94,7 +95,9 @@ export default function MorePage() {
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(139,0,0,0.06)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ width: 24, display: 'flex', justifyContent: 'center' }}>
+              <Icon name={item.icon} size={18} color="#888" />
+            </span>
             <span>{item.label}</span>
             <span style={{ marginLeft: 'auto', color: '#444', fontSize: 16 }}>›</span>
           </div>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import Icon from '../components/Icon';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -62,10 +63,10 @@ export default function LandingPage() {
         {/* Features */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', maxWidth: 320, marginBottom: 48 }}>
           {[
-            { icon: '🔥', title: '성향 매칭', desc: 'S / M / SW 성향 기반으로 궁합이 맞는 파트너를 찾아드립니다' },
-            { icon: '🎭', title: '플레이 취향', desc: '20가지 이상의 플레이 중 나의 취향을 설정하고 맞는 상대를 만나세요' },
-            { icon: '📍', title: '주변 탐색', desc: '내 주변의 같은 성향을 가진 사람들을 실시간으로 확인하세요' },
-            { icon: '🔒', title: '안전한 만남', desc: '본인 인증을 통한 안전하고 신뢰할 수 있는 커뮤니티' },
+            { icon: 'fire', title: '성향 매칭', desc: 'S / M / SW 성향 기반으로 궁합이 맞는 파트너를 찾아드립니다', color: '#C9A96E' },
+            { icon: 'mask', title: '플레이 취향', desc: '20가지 이상의 플레이 중 나의 취향을 설정하고 맞는 상대를 만나세요', color: '#C9A96E' },
+            { icon: 'pin', title: '주변 탐색', desc: '내 주변의 같은 성향을 가진 사람들을 실시간으로 확인하세요', color: '#C9A96E' },
+            { icon: 'shield', title: '안전한 만남', desc: '본인 인증을 통한 안전하고 신뢰할 수 있는 커뮤니티', color: '#C9A96E' },
           ].map((feat, i) => (
             <div
               key={feat.title}
@@ -85,10 +86,9 @@ export default function LandingPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 20,
                 flexShrink: 0,
               }}>
-                {feat.icon}
+                <Icon name={feat.icon} size={22} color={feat.color} />
               </div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#E8D5B0', marginBottom: 3 }}>

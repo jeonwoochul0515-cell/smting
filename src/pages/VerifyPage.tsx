@@ -183,7 +183,7 @@ export default function VerifyPage() {
               transition: 'all 0.2s',
             }}
           >
-            {fetchingPhone ? '연락처에서 가져오는 중...' : '📱 내 기기에서 번호 가져오기'}
+            {fetchingPhone ? '연락처에서 가져오는 중...' : '내 기기에서 번호 가져오기'}
           </button>
 
           {/* Send Code Button */}

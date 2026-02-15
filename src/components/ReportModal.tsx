@@ -77,7 +77,7 @@ export default function ReportModal({ nickname, onClose, onBlock, mode }: Report
                   textAlign: 'left',
                 }}
               >
-                🚨 신고하기
+                신고하기
               </button>
               <button
                 onClick={handleBlock}
@@ -92,7 +92,7 @@ export default function ReportModal({ nickname, onClose, onBlock, mode }: Report
                   textAlign: 'left',
                 }}
               >
-                🚫 차단하기
+                차단하기
               </button>
               <button
                 onClick={onClose}
@@ -190,7 +190,12 @@ export default function ReportModal({ nickname, onClose, onBlock, mode }: Report
         {/* Done View */}
         {view === 'done' && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <svg width={48} height={48} viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="rgba(0,200,83,0.15)" stroke="#00C853" strokeWidth="2" />
+                <path d="m9 12 2 2 4-4" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
               신고가 접수되었습니다
             </h3>
