@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import SubTabs from '../components/SubTabs';
@@ -33,60 +33,61 @@ export default function TalkPage() {
   const [loading, setLoading] = useState(true);
   const [showWriteModal, setShowWriteModal] = useState(false);
 
-  // Load talk posts
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setLoading(true);
+  // Load talk posts with useCallback for external access
+  const loadPosts = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        let query = supabase
-          .from('talk_posts')
-          .select(
-            `
-            id, user_id, title, content, category, created_at,
-            profiles!inner(id, nickname, age, tendency, gender)
+      let query = supabase
+        .from('talk_posts')
+        .select(
           `
-          );
+          id, user_id, title, content, category, created_at,
+          profiles!inner(id, nickname, age, tendency, gender)
+        `
+        );
 
-        // Filter by tab
-        if (activeTab === '지역') {
-          query = query.eq('category', '지역');
-        } else if (activeTab === '등네') {
-          query = query.eq('category', '등네');
-        } else if (activeTab === '내토크') {
-          query = query.eq('user_id', currentUser?.id);
-        }
-        // 근처 탭은 나중에 클라이언트 사이드 필터링
-
-        const { data, error } = await query.order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Transform data and add distance
-        const transformedPosts: TalkPost[] = (data || []).map((post: any) => ({
-          id: post.id,
-          user_id: post.user_id,
-          title: post.title,
-          content: post.content,
-          category: post.category,
-          created_at: post.created_at,
-          user_nickname: post.profiles.nickname,
-          user_age: post.profiles.age,
-          user_tendency: post.profiles.tendency,
-          user_gender: post.profiles.gender,
-          distance_km: Math.random() * 50 + 0.1, // Random distance
-        }));
-
-        setPosts(transformedPosts);
-      } catch (err) {
-        console.error('Failed to load posts:', err);
-      } finally {
-        setLoading(false);
+      // Filter by tab
+      if (activeTab === '지역') {
+        query = query.eq('category', '지역');
+      } else if (activeTab === '등네') {
+        query = query.eq('category', '등네');
+      } else if (activeTab === '내토크') {
+        query = query.eq('user_id', currentUser?.id);
       }
-    };
+      // 근처 탭은 나중에 클라이언트 사이드 필터링
 
-    loadPosts();
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data and add distance
+      const transformedPosts: TalkPost[] = (data || []).map((post: any) => ({
+        id: post.id,
+        user_id: post.user_id,
+        title: post.title,
+        content: post.content,
+        category: post.category,
+        created_at: post.created_at,
+        user_nickname: post.profiles.nickname,
+        user_age: post.profiles.age,
+        user_tendency: post.profiles.tendency,
+        user_gender: post.profiles.gender,
+        distance_km: Math.random() * 50 + 0.1, // Random distance
+      }));
+
+      setPosts(transformedPosts);
+    } catch (err) {
+      console.error('Failed to load posts:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [activeTab, currentUser?.id]);
+
+  // Load posts on mount and when tab changes
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
   const handleTabSelect = (tab: string) => {
     setActiveTab(tab);
@@ -262,7 +263,7 @@ export default function TalkPage() {
           onSuccess={() => {
             setShowWriteModal(false);
             // Reload posts
-            setLoading(true);
+            loadPosts();
           }}
         />
       )}
