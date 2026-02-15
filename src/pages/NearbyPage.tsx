@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import SubTabs from '../components/SubTabs';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
+import TalkWriteModal from '../components/TalkWriteModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { calcMatchRate } from '../utils/matchAlgo';
@@ -36,6 +37,8 @@ export default function NearbyPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [showTalkModal, setShowTalkModal] = useState(false);
+  const [cai, setCai] = useState(0);
 
   // 앱 로드 시 모든 프로필 불러오기
   useEffect(() => {
@@ -53,6 +56,13 @@ export default function NearbyPage() {
 
           if (myData) {
             setCurrentUserProfile(myData);
+            setCai(myData.cai || 0);
+            // 처음 로그인 후 토크 팝업 띄우기 (localStorage 체크)
+            const hasSeenTalkModal = localStorage.getItem(`talk_modal_${user.id}`);
+            if (!hasSeenTalkModal) {
+              setShowTalkModal(true);
+              localStorage.setItem(`talk_modal_${user.id}`, 'true');
+            }
           }
         }
 
@@ -134,9 +144,15 @@ export default function NearbyPage() {
     );
   }
 
+  const handleTalkSuccess = () => {
+    // Cai +30
+    setCai(prev => prev + 30);
+  };
+
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header
+        cai={cai}
         right={
           <button
             onClick={() => setShowFilter(!showFilter)}
@@ -377,6 +393,14 @@ export default function NearbyPage() {
           ))
         )}
       </div>
+
+      {/* Talk Write Modal */}
+      {showTalkModal && (
+        <TalkWriteModal
+          onClose={() => setShowTalkModal(false)}
+          onSuccess={handleTalkSuccess}
+        />
+      )}
     </div>
   );
 }

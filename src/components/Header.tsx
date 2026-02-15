@@ -3,9 +3,10 @@ interface HeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   right?: React.ReactNode;
+  cai?: number;
 }
 
-export default function Header({ title = 'SMting', showBack, onBack, right }: HeaderProps) {
+export default function Header({ title = 'SMting', showBack, onBack, right, cai }: HeaderProps) {
   return (
     <header style={{
       display: 'flex',
@@ -34,15 +35,28 @@ export default function Header({ title = 'SMting', showBack, onBack, right }: He
             ‹
           </button>
         )}
-        <h1 style={{
-          fontSize: 20,
-          fontWeight: 800,
-          color: '#C9A96E',
-          letterSpacing: 1,
-          textShadow: '0 1px 8px rgba(201, 169, 110, 0.3)',
-        }}>
-          {title}
-        </h1>
+        <div>
+          <h1 style={{
+            fontSize: 20,
+            fontWeight: 800,
+            color: '#C9A96E',
+            letterSpacing: 1,
+            textShadow: '0 1px 8px rgba(201, 169, 110, 0.3)',
+            margin: 0,
+          }}>
+            {title}
+          </h1>
+          {cai !== undefined && (
+            <div style={{
+              fontSize: 11,
+              color: '#E8D5B0',
+              marginTop: 2,
+              fontWeight: 600,
+            }}>
+              Cai: {cai}
+            </div>
+          )}
+        </div>
       </div>
       {right && <div>{right}</div>}
     </header>
