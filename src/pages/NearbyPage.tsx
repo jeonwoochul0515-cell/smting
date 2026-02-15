@@ -26,16 +26,11 @@ interface UserProfile {
 }
 
 const subTabs = ['근처여자', '근처남자', '최근여자', '최근남자'];
-const tendencyFilters: (Tendency | '전체')[] = ['전체', 'S', 'M', 'SW'];
-const distanceFilters = ['전체', '10km', '20km', '50km'];
 
 export default function NearbyPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('근처여자');
-  const [showFilter, setShowFilter] = useState(false);
-  const [tendencyFilter, setTendencyFilter] = useState<Tendency | '전체'>('전체');
-  const [distanceFilter, setDistanceFilter] = useState('전체');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
@@ -99,8 +94,6 @@ export default function NearbyPage() {
     loadProfiles();
   }, [user]);
 
-  const parseDistance = (d: string) => parseFloat(d.replace('km', ''));
-
   const filtered = users.filter(u => {
     // Gender filter
     if (activeTab === '근처여자' || activeTab === '최근여자') {
@@ -111,27 +104,18 @@ export default function NearbyPage() {
 
     // Tab-based filter (근처 vs 최근)
     if (activeTab === '근처여자' || activeTab === '근처남자') {
-      // 근처: 20km 이내
-      if ((u.distance_km || 999) > 20) return false;
+      // 근처: 20km 이내 (좌표 없으면 포함)
+      if (u.distance_km && u.distance_km > 20) return false;
     } else if (activeTab === '최근여자' || activeTab === '최근남자') {
-      // 최근: 10시간 이내 접속
+      // 최근: 10시간 이내 접속 (last_active_at 없으면 포함)
       if (u.last_active_at) {
         const now = new Date();
         const lastActive = new Date(u.last_active_at + (u.last_active_at.endsWith('Z') ? '' : 'Z'));
         const diffHours = (now.getTime() - lastActive.getTime()) / 3600000;
         if (diffHours > 10) return false;
-      } else {
-        return false; // last_active_at 없으면 제외
       }
     }
 
-    // Tendency filter
-    if (tendencyFilter !== '전체' && u.tendency !== tendencyFilter) return false;
-    // Distance filter (추가 필터용)
-    if (distanceFilter !== '전체') {
-      const maxDist = parseDistance(distanceFilter);
-      if ((u.distance_km || 0) > maxDist) return false;
-    }
     return true;
   });
 
@@ -159,9 +143,6 @@ export default function NearbyPage() {
     // 근처순: 거리 오름차순
     return (a.distance_km || 0) - (b.distance_km || 0);
   });
-
-  const activeFilterCount =
-    (tendencyFilter !== '전체' ? 1 : 0) + (distanceFilter !== '전체' ? 1 : 0);
 
   if (loading) {
     return (
@@ -194,129 +175,8 @@ export default function NearbyPage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
-      <Header
-        cai={cai}
-        right={
-          <button
-            onClick={() => setShowFilter(!showFilter)}
-            style={{
-              background: activeFilterCount > 0
-                ? 'rgba(201,169,110,0.15)'
-                : 'rgba(255,255,255,0.1)',
-              color: activeFilterCount > 0 ? '#C9A96E' : '#fff',
-              fontSize: 13,
-              padding: '5px 12px',
-              borderRadius: 8,
-              fontWeight: 600,
-              border: activeFilterCount > 0
-                ? '1px solid rgba(201,169,110,0.3)'
-                : 'none',
-            }}
-          >
-            필터 {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
-          </button>
-        }
-      />
+      <Header cai={cai} />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={setActiveTab} />
-
-      {/* Filter Panel */}
-      {showFilter && (
-        <div
-          style={{
-            padding: '16px',
-            backgroundColor: 'rgba(20,20,20,0.95)',
-            backdropFilter: 'blur(10px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            animation: 'fadeIn 0.2s ease',
-          }}
-        >
-          {/* Tendency Filter */}
-          <div style={{ marginBottom: 14 }}>
-            <span
-              style={{
-                fontSize: 12,
-                color: '#C9A96E',
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'block',
-              }}
-            >
-              성향
-            </span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {tendencyFilters.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTendencyFilter(t)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 0',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: tendencyFilter === t ? '#fff' : '#777',
-                    background:
-                      tendencyFilter === t
-                        ? t === 'S'
-                          ? 'linear-gradient(135deg, #8B0000, #CC0000)'
-                          : t === 'M'
-                          ? 'linear-gradient(135deg, #4A0080, #7B2FBE)'
-                          : t === 'SW'
-                          ? 'linear-gradient(135deg, #005C5C, #008B8B)'
-                          : 'linear-gradient(135deg, #333, #555)'
-                        : 'rgba(255,255,255,0.04)',
-                    border: tendencyFilter === t ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Distance Filter */}
-          <div>
-            <span
-              style={{
-                fontSize: 12,
-                color: '#C9A96E',
-                fontWeight: 600,
-                marginBottom: 8,
-                display: 'block',
-              }}
-            >
-              거리
-            </span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {distanceFilters.map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDistanceFilter(d)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 0',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: distanceFilter === d ? '#C9A96E' : '#777',
-                    background:
-                      distanceFilter === d
-                        ? 'rgba(201,169,110,0.1)'
-                        : 'rgba(255,255,255,0.04)',
-                    border: distanceFilter === d
-                      ? '1px solid rgba(201,169,110,0.3)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* User List */}
       <div>
