@@ -1,39 +1,34 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
+import LandingPage from './pages/LandingPage';
+import VerifyPage from './pages/VerifyPage';
+import PermissionsPage from './pages/PermissionsPage';
+import RegisterPage from './pages/RegisterPage';
 import TalkPage from './pages/TalkPage';
 import NearbyPage from './pages/NearbyPage';
 import ThemePage from './pages/ThemePage';
 import MessagesPage from './pages/MessagesPage';
 import ChatPage from './pages/ChatPage';
 import MorePage from './pages/MorePage';
-import RegisterPage from './pages/RegisterPage';
 
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      {children}
-      <BottomNav />
-    </>
-  );
-}
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register'];
 
 function App() {
   const location = useLocation();
-  const isChatPage = location.pathname.startsWith('/chat/');
-  const isRegisterPage = location.pathname === '/register';
+  const isFullScreen = fullScreenPaths.includes(location.pathname) || location.pathname.startsWith('/chat/');
 
   return (
     <div>
-      {isRegisterPage ? (
+      {isFullScreen ? (
         <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/permissions" element={<PermissionsPage />} />
           <Route path="/register" element={<RegisterPage />} />
-        </Routes>
-      ) : isChatPage ? (
-        <Routes>
           <Route path="/chat/:userId" element={<ChatPage />} />
         </Routes>
       ) : (
-        <Layout>
+        <>
           <Routes>
             <Route path="/talk" element={<TalkPage />} />
             <Route path="/nearby" element={<NearbyPage />} />
@@ -42,7 +37,8 @@ function App() {
             <Route path="/more" element={<MorePage />} />
             <Route path="*" element={<Navigate to="/nearby" replace />} />
           </Routes>
-        </Layout>
+          <BottomNav />
+        </>
       )}
     </div>
   );
