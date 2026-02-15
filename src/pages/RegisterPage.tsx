@@ -80,7 +80,7 @@ export default function RegisterPage() {
 
       if (error) throw error;
       // Force page reload to re-check profile in App
-      window.location.href = '/nearby';
+      window.location.href = '/talk';
     } catch (err: any) {
       alert('프로필 저장 실패: ' + err.message);
     } finally {

@@ -105,7 +105,7 @@ function App() {
           <Route path="/block-list" element={<BlockListPage />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
           <Route path="/talk/write" element={<TalkWritePage />} />
-          <Route path="*" element={<Navigate to="/nearby" replace />} />
+          <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (
         <>
@@ -115,7 +115,7 @@ function App() {
             <Route path="/theme" element={<ThemePage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/more" element={<MorePage />} />
-            <Route path="*" element={<Navigate to="/nearby" replace />} />
+            <Route path="*" element={<Navigate to="/talk" replace />} />
           </Routes>
           <BottomNav />
         </>
