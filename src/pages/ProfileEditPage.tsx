@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency } from '../data/mockData';
 import Header from '../components/Header';
 import Icon from '../components/Icon';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 const avatarColors = ['#8B0000', '#A0153E', '#5C0029', '#2D033B', '#3D0C11', '#6B0848', '#4A0080', '#005C5C'];
 
@@ -15,6 +17,7 @@ const rankColors = [
 
 export default function ProfileEditPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [nickname, setNickname] = useState('나의프로필');
   const [age, setAge] = useState('28');
   const [intro, setIntro] = useState('매너 있는 S입니다. 대화부터 시작해요.');
@@ -23,6 +26,40 @@ export default function ProfileEditPage() {
   const [selectedPlays, setSelectedPlays] = useState<string[]>(['bondage', 'discipline', 'roleplay']);
   const [topPlays, setTopPlays] = useState<string[]>(['bondage', 'discipline', 'roleplay']);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // 앱 로드 시 DB에서 프로필 데이터 불러오기
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+
+        if (data) {
+          setNickname(data.nickname || '나의프로필');
+          setAge(data.age?.toString() || '28');
+          setIntro(data.intro || '');
+          setTendency(data.tendency || 'S');
+          setAvatarColor(data.avatar || '#8B0000');
+          setSelectedPlays(data.all_plays || []);
+          setTopPlays(data.top_plays || []);
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [user]);
 
   const togglePlay = (id: string) => {
     setSelectedPlays(prev =>
@@ -39,9 +76,33 @@ export default function ProfileEditPage() {
     });
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => navigate('/more'), 1000);
+  const handleSave = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          nickname,
+          age: parseInt(age),
+          intro,
+          tendency,
+          avatar: avatarColor,
+          all_plays: selectedPlays,
+          top_plays: topPlays,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSaved(true);
+      setTimeout(() => navigate('/more'), 1000);
+    } catch (err: any) {
+      alert('저장 실패: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -276,6 +337,7 @@ export default function ProfileEditPage() {
       }}>
         <button
           onClick={handleSave}
+          disabled={saving || loading}
           style={{
             width: '100%',
             padding: '14px 0',
@@ -286,10 +348,12 @@ export default function ProfileEditPage() {
             background: 'linear-gradient(135deg, #8B0000, #5C0029)',
             border: 'none',
             boxShadow: '0 4px 16px rgba(139,0,0,0.4)',
-            cursor: 'pointer',
+            cursor: saving || loading ? 'default' : 'pointer',
+            opacity: saving || loading ? 0.6 : 1,
+            transition: 'opacity 0.2s',
           }}
         >
-          {saved ? '✓ 저장되었습니다' : '저장하기'}
+          {saving ? '저장 중...' : saved ? '✓ 저장되었습니다' : '저장하기'}
         </button>
       </div>
     </div>

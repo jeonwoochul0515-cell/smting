@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency, Gender } from '../data/mockData';
 import Icon from '../components/Icon';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 const STEP_TITLES = ['기본 정보', '플레이 선택', '최애플 TOP 3'];
 
@@ -14,7 +16,9 @@ const rankColors = [
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   // Step 1
   const [nickname, setNickname] = useState('');
@@ -51,9 +55,38 @@ export default function RegisterPage() {
     return false;
   };
 
-  const handleNext = () => {
-    if (step < 2) setStep(step + 1);
-    else navigate('/nearby');
+  const handleNext = async () => {
+    if (step < 2) {
+      setStep(step + 1);
+      return;
+    }
+
+    // Step 3 완료: 프로필 저장
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .insert([{
+          id: user.id,
+          nickname,
+          age: parseInt(age),
+          gender,
+          tendency,
+          intro: '',
+          avatar: '#8B0000',
+          top_plays: topPlays,
+          all_plays: selectedPlays,
+        }]);
+
+      if (error) throw error;
+      navigate('/nearby');
+    } catch (err: any) {
+      alert('프로필 저장 실패: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -395,7 +428,7 @@ export default function RegisterPage() {
         )}
         <button
           onClick={handleNext}
-          disabled={!canNext()}
+          disabled={!canNext() || saving}
           style={{
             flex: 1,
             padding: '14px 0',
@@ -415,7 +448,7 @@ export default function RegisterPage() {
             letterSpacing: 0.5,
           }}
         >
-          {step === 2 ? '가입 완료' : '다음'}
+          {saving ? '저장 중...' : step === 2 ? '가입 완료' : '다음'}
         </button>
       </div>
     </div>
