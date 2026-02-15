@@ -38,14 +38,10 @@ export default function TalkPage() {
     try {
       setLoading(true);
 
+      // 1. Load posts
       let query = supabase
         .from('talk_posts')
-        .select(
-          `
-          id, user_id, title, content, category, created_at,
-          profiles!inner(id, nickname, age, tendency, gender)
-        `
-        );
+        .select('*');
 
       // Filter by tab
       if (activeTab === '지역') {
@@ -55,30 +51,53 @@ export default function TalkPage() {
       } else if (activeTab === '내토크') {
         query = query.eq('user_id', currentUser?.id);
       }
-      // 근처 탭은 나중에 클라이언트 사이드 필터링
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: postsData, error: postsError } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (postsError) throw postsError;
 
-      // Transform data and add distance
-      const transformedPosts: TalkPost[] = (data || []).map((post: any) => ({
-        id: post.id,
-        user_id: post.user_id,
-        title: post.title,
-        content: post.content,
-        category: post.category,
-        created_at: post.created_at,
-        user_nickname: post.profiles.nickname,
-        user_age: post.profiles.age,
-        user_tendency: post.profiles.tendency,
-        user_gender: post.profiles.gender,
-        distance_km: Math.random() * 50 + 0.1, // Random distance
-      }));
+      if (!postsData || postsData.length === 0) {
+        setPosts([]);
+        return;
+      }
+
+      // 2. Get unique user IDs from posts
+      const userIds = [...new Set(postsData.map(p => p.user_id))];
+
+      // 3. Load profiles for those users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, nickname, age, tendency, gender')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // 4. Create profile lookup map
+      const profileMap = new Map<string, any>();
+      (profilesData || []).forEach(p => profileMap.set(p.id, p));
+
+      // 5. Transform and merge data
+      const transformedPosts: TalkPost[] = postsData.map((post: any) => {
+        const profile = profileMap.get(post.user_id);
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          title: post.title || '',
+          content: post.content || '',
+          category: post.category || '전체',
+          created_at: post.created_at,
+          user_nickname: profile?.nickname || '알 수 없음',
+          user_age: profile?.age || 0,
+          user_tendency: profile?.tendency || 'S',
+          user_gender: profile?.gender || '',
+          distance_km: Math.random() * 50 + 0.1,
+        };
+      });
 
       setPosts(transformedPosts);
     } catch (err) {
       console.error('Failed to load posts:', err);
+      setPosts([]);
     } finally {
       setLoading(false);
     }

@@ -59,7 +59,6 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
         }]);
 
       onSuccess();
-      onClose();
     } catch (err: any) {
       setError(err.message || '저장 실패');
     } finally {
