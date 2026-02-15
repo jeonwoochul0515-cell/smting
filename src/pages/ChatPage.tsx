@@ -243,7 +243,7 @@ export default function ChatPage() {
                   {msg.content}
                 </div>
                 <span style={{ fontSize: 10, color: '#555', whiteSpace: 'nowrap' }}>
-                  {new Date(msg.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(msg.created_at + (msg.created_at.endsWith('Z') ? '' : 'Z')).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             </div>
