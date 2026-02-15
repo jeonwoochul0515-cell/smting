@@ -37,13 +37,11 @@ export default function NearbyPage() {
   const [showTalkModal, setShowTalkModal] = useState(false);
   const [cai, setCai] = useState(0);
 
-  // 앱 로드 시 모든 프로필 불러오기
   useEffect(() => {
     const loadProfiles = async () => {
       try {
         setLoading(true);
 
-        // 현재 사용자 프로필 불러오기
         let myLat: number | null = null;
         let myLng: number | null = null;
         if (user) {
@@ -58,7 +56,6 @@ export default function NearbyPage() {
             setCai(myData.cai || 0);
             myLat = myData.latitude ?? null;
             myLng = myData.longitude ?? null;
-            // 처음 로그인 후 토크 팝업 띄우기 (localStorage 체크)
             const hasSeenTalkModal = localStorage.getItem(`talk_modal_${user.id}`);
             if (!hasSeenTalkModal) {
               setShowTalkModal(true);
@@ -67,7 +64,6 @@ export default function NearbyPage() {
           }
         }
 
-        // 모든 사용자 프로필 불러오기 (본인 제외)
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -75,12 +71,11 @@ export default function NearbyPage() {
 
         if (error) throw error;
 
-        // 거리 계산 (내 좌표와 상대방 좌표 기반)
         const usersWithDistance = (data || []).map(u => ({
           ...u,
           distance_km: (myLat && myLng && u.latitude && u.longitude)
             ? getDistanceKm(myLat, myLng, u.latitude, u.longitude)
-            : 999,
+            : undefined,
         }));
 
         setUsers(usersWithDistance);
@@ -93,69 +88,6 @@ export default function NearbyPage() {
 
     loadProfiles();
   }, [user]);
-
-  const filtered = users.filter(u => {
-    // Gender filter
-    if (activeTab === '근처여자' || activeTab === '최근여자') {
-      if (u.gender !== '여') return false;
-    } else {
-      if (u.gender !== '남') return false;
-    }
-
-    // Tab-based filter (근처 vs 최근)
-    if (activeTab === '근처여자' || activeTab === '근처남자') {
-      // 근처: 20km 이내 (좌표 없으면 포함)
-      if (u.distance_km && u.distance_km > 20) return false;
-    } else if (activeTab === '최근여자' || activeTab === '최근남자') {
-      // 최근: 10시간 이내 접속 (last_active_at 없으면 포함)
-      if (u.last_active_at) {
-        const now = new Date();
-        const lastActive = new Date(u.last_active_at + (u.last_active_at.endsWith('Z') ? '' : 'Z'));
-        const diffHours = (now.getTime() - lastActive.getTime()) / 3600000;
-        if (diffHours > 10) return false;
-      }
-    }
-
-    return true;
-  });
-
-  // 매칭률 계산 (현재 사용자와 비교)
-  const filteredWithMatch = filtered.map(u => ({
-    ...u,
-    matchRate: currentUserProfile
-      ? calcMatchRate(
-          currentUserProfile.tendency,
-          u.tendency,
-          currentUserProfile.all_plays || [],
-          u.all_plays || []
-        )
-      : 0,
-  }));
-
-  // 정렬
-  const sorted = filteredWithMatch.sort((a, b) => {
-    if (activeTab.includes('최근')) {
-      // 최근순: 접속 시간 내림차순 (최근 접속이 위로)
-      const aTime = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
-      const bTime = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
-      return bTime - aTime;
-    }
-    // 근처순: 거리 오름차순
-    return (a.distance_km || 0) - (b.distance_km || 0);
-  });
-
-  if (loading) {
-    return (
-      <div style={{ paddingBottom: 60, textAlign: 'center', padding: '40px 20px' }}>
-        <p style={{ fontSize: 14, color: '#888' }}>사용자 불러오는 중...</p>
-      </div>
-    );
-  }
-
-  const handleTalkSuccess = () => {
-    // Cai +30
-    setCai(prev => prev + 30);
-  };
 
   const getTimeAgo = (date: string | undefined): string => {
     if (!date) return '';
@@ -173,12 +105,67 @@ export default function NearbyPage() {
     return then.toLocaleDateString('ko-KR');
   };
 
+  const filtered = users.filter(u => {
+    // Gender
+    if (activeTab === '근처여자' || activeTab === '최근여자') {
+      if (u.gender !== '여') return false;
+    } else {
+      if (u.gender !== '남') return false;
+    }
+
+    if (activeTab === '근처여자' || activeTab === '근처남자') {
+      // 근처: 20km 이내 (거리 모르면 포함)
+      if (u.distance_km !== undefined && u.distance_km > 20) return false;
+    } else {
+      // 최근: 10시간 이내 접속 (접속기록 없으면 포함)
+      if (u.last_active_at) {
+        const now = new Date();
+        const lastActive = new Date(u.last_active_at + (u.last_active_at.endsWith('Z') ? '' : 'Z'));
+        const diffHours = (now.getTime() - lastActive.getTime()) / 3600000;
+        if (diffHours > 10) return false;
+      }
+    }
+
+    return true;
+  });
+
+  const filteredWithMatch = filtered.map(u => ({
+    ...u,
+    matchRate: currentUserProfile
+      ? calcMatchRate(
+          currentUserProfile.tendency,
+          u.tendency,
+          currentUserProfile.all_plays || [],
+          u.all_plays || []
+        )
+      : 0,
+  }));
+
+  const sorted = filteredWithMatch.sort((a, b) => {
+    if (activeTab.includes('최근')) {
+      const aTime = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
+      const bTime = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+      return bTime - aTime;
+    }
+    // 근처: 거리 오름차순 (거리 없으면 뒤로)
+    const aDist = a.distance_km ?? 9999;
+    const bDist = b.distance_km ?? 9999;
+    return aDist - bDist;
+  });
+
+  if (loading) {
+    return (
+      <div style={{ paddingBottom: 60, textAlign: 'center', padding: '40px 20px' }}>
+        <p style={{ fontSize: 14, color: '#888' }}>사용자 불러오는 중...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header cai={cai} />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={setActiveTab} />
 
-      {/* User List */}
       <div>
         {sorted.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>
@@ -208,51 +195,42 @@ export default function NearbyPage() {
             >
               <Avatar color={user.avatar} nickname={user.nickname} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginBottom: 3,
-                  }}
-                >
+                {/* 1행: 성향뱃지 + 닉네임 + 나이 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <TendencyBadge tendency={user.tendency} size="sm" />
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: '#F0F0F0' }}>
                     {user.nickname}
                   </span>
-                  <span style={{ fontSize: 12, color: '#888' }}>
-                    ({user.gender}{user.age}세)
+                  <span style={{ fontSize: 12, color: '#777' }}>
+                    {user.age}세
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 5 }}>
-                  <span>{user.distance_km?.toFixed(1)}km</span>
-                  {user.last_active_at && (
-                    <>
-                      <span style={{ margin: '0 6px', color: '#555' }}>•</span>
-                      <span>{getTimeAgo(user.last_active_at)} 접속</span>
-                    </>
-                  )}
+
+                {/* 2행: 거리 + 접속시간 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#888', marginBottom: 4 }}>
+                  <span>
+                    {user.distance_km !== undefined
+                      ? `${user.distance_km < 1 ? (user.distance_km * 1000).toFixed(0) + 'm' : user.distance_km.toFixed(1) + 'km'}`
+                      : '거리 미확인'}
+                  </span>
+                  <span style={{ color: '#444' }}>·</span>
+                  <span>{user.last_active_at ? getTimeAgo(user.last_active_at) + ' 접속' : '접속 정보 없음'}</span>
                 </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: '#888',
-                    marginBottom: 5,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+
+                {/* 3행: 자기소개 */}
+                <div style={{
+                  fontSize: 12,
+                  color: '#999',
+                  marginBottom: 5,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
                   {user.intro || '자기소개 없음'}
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 4,
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                  }}
-                >
+
+                {/* 4행: 최애플 + 궁합 */}
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                   {(user.top_plays || []).slice(0, 3).map((playId) => (
                     <span
                       key={playId}
@@ -268,18 +246,12 @@ export default function NearbyPage() {
                       #{playId}
                     </span>
                   ))}
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: '#C9A96E',
-                      marginLeft: 'auto',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <span style={{ fontSize: 10, color: '#C9A96E', marginLeft: 'auto', fontWeight: 600 }}>
                     궁합 {user.matchRate}%
                   </span>
                 </div>
               </div>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -306,11 +278,13 @@ export default function NearbyPage() {
         )}
       </div>
 
-      {/* Talk Write Modal */}
       {showTalkModal && (
         <TalkWriteModal
           onClose={() => setShowTalkModal(false)}
-          onSuccess={handleTalkSuccess}
+          onSuccess={() => {
+            setShowTalkModal(false);
+            setCai(prev => prev + 30);
+          }}
         />
       )}
     </div>

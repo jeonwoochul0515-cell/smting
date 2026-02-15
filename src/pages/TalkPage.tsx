@@ -19,7 +19,7 @@ interface TalkPost {
   user_age: number;
   user_tendency: string;
   user_gender: string;
-  distance_km: number;
+  distance_km?: number;
 }
 
 const subTabs = ['전체', '지역', '등네', '근처', '내토크'];
@@ -99,7 +99,7 @@ export default function TalkPage() {
           user_gender: profile?.gender || '',
           distance_km: (myLat && myLng && profile?.latitude && profile?.longitude)
             ? getDistanceKm(myLat, myLng, profile.latitude, profile.longitude)
-            : 999,
+            : undefined,
         };
       });
 
@@ -123,9 +123,9 @@ export default function TalkPage() {
 
   // Filter posts by distance based on tab
   const filteredPosts = (() => {
-    if (activeTab === '지역') return posts.filter(p => p.distance_km <= 50);
-    if (activeTab === '등네') return posts.filter(p => p.distance_km <= 20);
-    if (activeTab === '근처') return posts.filter(p => p.distance_km <= 10);
+    if (activeTab === '지역') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 50);
+    if (activeTab === '등네') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 20);
+    if (activeTab === '근처') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 10);
     return posts; // 전체, 내토크
   })();
 
@@ -217,7 +217,7 @@ export default function TalkPage() {
                     {post.user_gender}
                     {post.user_age}세
                   </span>
-                  <span>{post.distance_km.toFixed(1)}km</span>
+                  {post.distance_km !== undefined && <span>{post.distance_km < 1 ? (post.distance_km * 1000).toFixed(0) + 'm' : post.distance_km.toFixed(1) + 'km'}</span>}
                 </div>
               </div>
               <button
