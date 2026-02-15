@@ -5,6 +5,7 @@ import VerifyPage from './pages/VerifyPage';
 import PermissionsPage from './pages/PermissionsPage';
 import RegisterPage from './pages/RegisterPage';
 import TalkPage from './pages/TalkPage';
+import TalkWritePage from './pages/TalkWritePage';
 import NearbyPage from './pages/NearbyPage';
 import ThemePage from './pages/ThemePage';
 import MessagesPage from './pages/MessagesPage';
@@ -12,12 +13,15 @@ import ChatPage from './pages/ChatPage';
 import MorePage from './pages/MorePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 import BlockListPage from './pages/BlockListPage';
+import UserProfilePage from './pages/UserProfilePage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write'];
 
 function App() {
   const location = useLocation();
-  const isFullScreen = fullScreenPaths.includes(location.pathname) || location.pathname.startsWith('/chat/');
+  const isFullScreen = fullScreenPaths.includes(location.pathname)
+    || location.pathname.startsWith('/chat/')
+    || location.pathname.startsWith('/user/');
 
   return (
     <div>
@@ -30,6 +34,8 @@ function App() {
           <Route path="/chat/:userId" element={<ChatPage />} />
           <Route path="/profile/edit" element={<ProfileEditPage />} />
           <Route path="/block-list" element={<BlockListPage />} />
+          <Route path="/user/:userId" element={<UserProfilePage />} />
+          <Route path="/talk/write" element={<TalkWritePage />} />
         </Routes>
       ) : (
         <>

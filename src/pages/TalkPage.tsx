@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { talkPosts } from '../data/mockData';
 import Header from '../components/Header';
 import SubTabs from '../components/SubTabs';
@@ -8,11 +9,20 @@ const subTabs = ['전체', '사진', '지역', '동네', '근처', '내토크', 
 
 export default function TalkPage() {
   const [activeTab, setActiveTab] = useState('전체');
+  const navigate = useNavigate();
+
+  const handleTabSelect = (tab: string) => {
+    if (tab === '토크쓰기') {
+      navigate('/talk/write');
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header />
-      <SubTabs tabs={subTabs} active={activeTab} onSelect={setActiveTab} />
+      <SubTabs tabs={subTabs} active={activeTab} onSelect={handleTabSelect} />
       <div>
         {talkPosts.map((post, i) => (
           <div

@@ -147,7 +147,7 @@ export default function NearbyPage() {
           filtered.map((user, i) => (
             <div
               key={user.id}
-              onClick={() => navigate(`/chat/${user.id}`)}
+              onClick={() => navigate(`/user/${user.id}`)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
