@@ -30,33 +30,35 @@ export default function MorePage() {
       {/* Profile Card */}
       <div style={{
         margin: 16,
-        padding: 20,
-        backgroundColor: '#1A1A1A',
-        borderRadius: 16,
-        border: '1px solid #333',
+        padding: 22,
+        backgroundColor: 'rgba(26, 26, 26, 0.8)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 18,
+        border: '1px solid rgba(201, 169, 110, 0.12)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-          <Avatar color={myProfile.avatar} nickname={myProfile.nickname} size={64} online />
+          <Avatar color={myProfile.avatar} nickname={myProfile.nickname} size={64} online showRing />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 18, fontWeight: 700 }}>{myProfile.nickname}</span>
               <TendencyBadge tendency={myProfile.tendency} />
             </div>
-            <span style={{ fontSize: 13, color: '#999' }}>
+            <span style={{ fontSize: 13, color: '#888' }}>
               {myProfile.gender} · {myProfile.age}세
             </span>
           </div>
         </div>
-        <div style={{ fontSize: 14, color: '#ccc', marginBottom: 12 }}>{myProfile.intro}</div>
+        <div style={{ fontSize: 14, color: '#bbb', marginBottom: 14, lineHeight: 1.5 }}>{myProfile.intro}</div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {myProfile.tags.map(tag => (
             <span key={tag} style={{
               fontSize: 12,
-              color: '#8B0000',
-              backgroundColor: '#1A0000',
-              padding: '3px 10px',
+              color: '#C9A96E',
+              backgroundColor: 'rgba(201, 169, 110, 0.08)',
+              padding: '4px 12px',
               borderRadius: 12,
-              border: '1px solid #330000',
+              border: '1px solid rgba(201, 169, 110, 0.15)',
             }}>
               {tag}
             </span>
@@ -66,22 +68,26 @@ export default function MorePage() {
 
       {/* Menu */}
       <div style={{ margin: '0 16px' }}>
-        {menuItems.map(item => (
+        {menuItems.map((item, i) => (
           <div
             key={item.label}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
-              padding: '14px 4px',
-              borderBottom: '1px solid #1A1A1A',
+              gap: 14,
+              padding: '15px 6px',
+              borderBottom: '1px solid rgba(255,255,255,0.04)',
               cursor: 'pointer',
               fontSize: 15,
+              animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
+              transition: 'background-color 0.2s',
             }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(139,0,0,0.06)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
             <span>{item.label}</span>
-            <span style={{ marginLeft: 'auto', color: '#666', fontSize: 14 }}>›</span>
+            <span style={{ marginLeft: 'auto', color: '#444', fontSize: 16 }}>›</span>
           </div>
         ))}
       </div>

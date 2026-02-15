@@ -22,33 +22,44 @@ export default function ThemePage() {
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 12,
         }}>
-          {themes.map(theme => (
+          {themes.map((theme, i) => (
             <div
               key={theme.id}
               style={{
-                backgroundColor: '#1A1A1A',
-                borderRadius: 12,
-                padding: '20px 12px',
+                backgroundColor: 'rgba(26, 26, 26, 0.8)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: 14,
+                padding: '22px 12px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                border: '1px solid #333',
-                transition: 'border-color 0.2s',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                animation: `fadeIn 0.4s ease ${i * 0.06}s both`,
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 6px 20px rgba(0,0,0,0.4), 0 0 15px ${theme.color}33`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 8 }}>{theme.icon}</div>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{theme.name}</div>
-              <div style={{ fontSize: 11, color: '#999' }}>{theme.count}명 참여중</div>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>{theme.icon}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#eee' }}>{theme.name}</div>
+              <div style={{ fontSize: 11, color: '#C9A96E' }}>{theme.count}명 참여중</div>
               <div style={{
-                marginTop: 8,
+                marginTop: 10,
                 height: 3,
                 borderRadius: 2,
-                backgroundColor: '#333',
+                backgroundColor: 'rgba(255,255,255,0.06)',
                 overflow: 'hidden',
               }}>
                 <div style={{
                   width: `${Math.min(theme.count / 3, 100)}%`,
                   height: '100%',
-                  backgroundColor: theme.color,
+                  background: `linear-gradient(90deg, ${theme.color}, ${theme.color}88)`,
                   borderRadius: 2,
                 }} />
               </div>

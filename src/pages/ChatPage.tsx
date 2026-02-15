@@ -21,7 +21,7 @@ export default function ChatPage() {
         right={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <TendencyBadge tendency={user.tendency} />
-            <span style={{ fontSize: 12, color: '#FF6B6B' }}>궁합 {user.matchRate}%</span>
+            <span style={{ fontSize: 12, color: '#C9A96E', fontWeight: 600 }}>궁합 {user.matchRate}%</span>
           </div>
         }
       />
@@ -30,15 +30,23 @@ export default function ChatPage() {
         flex: 1,
         overflowY: 'auto',
         padding: '16px',
-        backgroundColor: '#111',
+        background: 'linear-gradient(180deg, #0A0A0A 0%, #0F0808 100%)',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
       }}>
-        <div style={{ textAlign: 'center', fontSize: 12, color: '#666', padding: '8px 0' }}>
+        <div style={{
+          textAlign: 'center',
+          fontSize: 11,
+          color: '#555',
+          padding: '8px 16px',
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          borderRadius: 12,
+          alignSelf: 'center',
+        }}>
           2026년 2월 15일
         </div>
-        {chatMessages.map(msg => (
+        {chatMessages.map((msg, i) => (
           <div
             key={msg.id}
             style={{
@@ -46,12 +54,13 @@ export default function ChatPage() {
               justifyContent: msg.isMe ? 'flex-end' : 'flex-start',
               alignItems: 'flex-end',
               gap: 8,
+              animation: `fadeIn 0.3s ease ${i * 0.08}s both`,
             }}
           >
             {!msg.isMe && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <Avatar color={user.avatar} nickname={user.nickname} size={36} />
-                <span style={{ fontSize: 10, color: '#999' }}>{user.nickname}</span>
+                <Avatar color={user.avatar} nickname={user.nickname} size={34} />
+                <span style={{ fontSize: 9, color: '#666' }}>{user.nickname}</span>
               </div>
             )}
             <div style={{
@@ -61,18 +70,24 @@ export default function ChatPage() {
               gap: 6,
             }}>
               <div style={{
-                maxWidth: 240,
+                maxWidth: 230,
                 padding: '10px 14px',
                 borderRadius: msg.isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                backgroundColor: msg.isMe ? '#8B0000' : '#2A2A2A',
+                background: msg.isMe
+                  ? 'linear-gradient(135deg, #8B0000, #5C0029)'
+                  : 'rgba(255,255,255,0.06)',
                 color: '#F0F0F0',
                 fontSize: 14,
                 lineHeight: 1.5,
                 wordBreak: 'break-word',
+                boxShadow: msg.isMe
+                  ? '0 2px 8px rgba(139,0,0,0.3)'
+                  : '0 2px 6px rgba(0,0,0,0.2)',
+                border: msg.isMe ? 'none' : '1px solid rgba(255,255,255,0.04)',
               }}>
                 {msg.text}
               </div>
-              <span style={{ fontSize: 10, color: '#666', whiteSpace: 'nowrap' }}>{msg.time}</span>
+              <span style={{ fontSize: 10, color: '#555', whiteSpace: 'nowrap' }}>{msg.time}</span>
             </div>
           </div>
         ))}
@@ -82,8 +97,9 @@ export default function ChatPage() {
         display: 'flex',
         padding: '10px 12px',
         gap: 8,
-        backgroundColor: '#1A1A1A',
-        borderTop: '1px solid #333',
+        backgroundColor: 'rgba(20,20,20,0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
       }}>
         <input
           value={input}
@@ -91,21 +107,22 @@ export default function ChatPage() {
           placeholder="메시지를 입력하세요..."
           style={{
             flex: 1,
-            padding: '10px 14px',
+            padding: '10px 16px',
             borderRadius: 20,
-            border: '1px solid #333',
-            backgroundColor: '#2A2A2A',
+            border: '1px solid rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.04)',
             color: '#F0F0F0',
             fontSize: 14,
           }}
         />
         <button style={{
-          backgroundColor: '#8B0000',
+          background: 'linear-gradient(135deg, #8B0000, #5C0029)',
           color: '#fff',
           borderRadius: 20,
-          padding: '0 18px',
+          padding: '0 20px',
           fontSize: 14,
           fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
         }}>
           전송
         </button>

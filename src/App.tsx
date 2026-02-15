@@ -6,6 +6,7 @@ import ThemePage from './pages/ThemePage';
 import MessagesPage from './pages/MessagesPage';
 import ChatPage from './pages/ChatPage';
 import MorePage from './pages/MorePage';
+import RegisterPage from './pages/RegisterPage';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,10 +20,15 @@ function Layout({ children }: { children: React.ReactNode }) {
 function App() {
   const location = useLocation();
   const isChatPage = location.pathname.startsWith('/chat/');
+  const isRegisterPage = location.pathname === '/register';
 
   return (
     <div>
-      {isChatPage ? (
+      {isRegisterPage ? (
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      ) : isChatPage ? (
         <Routes>
           <Route path="/chat/:userId" element={<ChatPage />} />
         </Routes>

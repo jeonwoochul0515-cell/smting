@@ -8,8 +8,9 @@ export default function SubTabs({ tabs, active, onSelect }: SubTabsProps) {
   return (
     <div style={{
       display: 'flex',
-      borderBottom: '1px solid #333',
-      backgroundColor: '#1A1A1A',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      backgroundColor: 'rgba(20, 20, 20, 0.9)',
+      backdropFilter: 'blur(10px)',
       overflowX: 'auto',
     }}>
       {tabs.map(tab => (
@@ -18,14 +19,16 @@ export default function SubTabs({ tabs, active, onSelect }: SubTabsProps) {
           onClick={() => onSelect(tab)}
           style={{
             flex: 'none',
-            padding: '10px 16px',
+            padding: '11px 16px',
             fontSize: 13,
             fontWeight: active === tab ? 700 : 400,
-            color: active === tab ? '#fff' : '#999',
+            color: active === tab ? '#C9A96E' : '#777',
             background: 'none',
-            borderBottom: active === tab ? '2px solid #8B0000' : '2px solid transparent',
+            borderBottom: active === tab ? '2px solid #C9A96E' : '2px solid transparent',
             whiteSpace: 'nowrap',
             borderRadius: 0,
+            transition: 'color 0.2s',
+            letterSpacing: 0.3,
           }}
         >
           {tab}

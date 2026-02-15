@@ -1,6 +1,36 @@
 export type Tendency = 'S' | 'M' | 'SW';
 export type Gender = '남' | '여';
 
+export interface PlayType {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+export const playTypes: PlayType[] = [
+  { id: 'bondage', name: '본디지', icon: '🔗', description: '구속 플레이' },
+  { id: 'rope', name: '로프플레이', icon: '🪢', description: '로프/줄을 이용한 플레이' },
+  { id: 'roleplay', name: '롤플레이', icon: '🎭', description: '역할극 플레이' },
+  { id: 'spanking', name: '스팽킹', icon: '🖐️', description: '스팽킹 플레이' },
+  { id: 'wax', name: '왁스플레이', icon: '🕯️', description: '왁스를 이용한 플레이' },
+  { id: 'sensual', name: '센슈얼', icon: '🌹', description: '감각적인 플레이' },
+  { id: 'fetish', name: '페티쉬', icon: '👠', description: '페티쉬 플레이' },
+  { id: 'discipline', name: '디시플린', icon: '📏', description: '훈육 플레이' },
+  { id: 'femdom', name: '펨돔', icon: '👑', description: '여성 지배 플레이' },
+  { id: 'maledom', name: '멜돔', icon: '🗡️', description: '남성 지배 플레이' },
+  { id: 'petting', name: '페팅', icon: '💋', description: '애무 중심 플레이' },
+  { id: 'choking', name: '초킹', icon: '🤚', description: '목 조르기 플레이' },
+  { id: 'nipple', name: '니플플레이', icon: '⭕', description: '니플 자극 플레이' },
+  { id: 'footworship', name: '풋워십', icon: '🦶', description: '발 페티쉬 플레이' },
+  { id: 'cosplay', name: '코스프레', icon: '👗', description: '의상 플레이' },
+  { id: 'ageplay', name: '에이지플레이', icon: '🧸', description: '나이 역할극' },
+  { id: 'petplay', name: '펫플레이', icon: '🐾', description: '반려동물 역할극' },
+  { id: 'sensory', name: '오감차단', icon: '🔇', description: '감각 차단 플레이' },
+  { id: 'switching', name: '스위칭', icon: '🔄', description: '역할 전환 플레이' },
+  { id: 'cnc', name: 'CNC', icon: '⚡', description: '합의된 비합의 플레이' },
+];
+
 export interface User {
   id: number;
   nickname: string;
