@@ -1,40 +1,25 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { users, playTypes } from '../data/mockData';
+import { playTypes, type Tendency } from '../data/mockData';
 import Header from '../components/Header';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
+import Icon from '../components/Icon';
 import { calcMatchRate } from '../utils/matchAlgo';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
-// Mock: assign random plays to users
-const userPlays: Record<number, string[]> = {
-  1: ['bondage', 'rope', 'sensual'],
-  2: ['discipline', 'roleplay', 'maledom'],
-  3: ['fetish', 'sensual', 'switching'],
-  4: ['rope', 'bondage', 'sensual'],
-  5: ['discipline', 'bondage', 'maledom'],
-  6: ['sensual', 'petting', 'cosplay'],
-  7: ['switching', 'roleplay', 'bondage'],
-  8: ['femdom', 'discipline', 'choking'],
-  9: ['bondage', 'rope', 'sensory'],
-  10: ['rope', 'sensual', 'petting'],
-  11: ['bondage', 'discipline', 'maledom'],
-  12: ['switching', 'fetish', 'petplay'],
-};
-
-const userTopPlays: Record<number, string[]> = {
-  1: ['bondage', 'rope', 'sensual'],
-  2: ['discipline', 'roleplay', 'maledom'],
-  3: ['fetish', 'sensual', 'switching'],
-  4: ['rope', 'bondage', 'sensual'],
-  5: ['discipline', 'bondage', 'maledom'],
-  6: ['sensual', 'petting', 'cosplay'],
-  7: ['switching', 'roleplay', 'bondage'],
-  8: ['femdom', 'discipline', 'choking'],
-  9: ['bondage', 'rope', 'sensory'],
-  10: ['rope', 'sensual', 'petting'],
-  11: ['bondage', 'discipline', 'maledom'],
-  12: ['switching', 'fetish', 'petplay'],
-};
+interface UserProfile {
+  id: string;
+  nickname: string;
+  age: number;
+  gender: string;
+  tendency: Tendency;
+  intro: string;
+  avatar: string;
+  all_plays: string[];
+  top_plays: string[];
+}
 
 const rankColors = [
   { bg: 'linear-gradient(135deg, #C9A96E, #E8D5B0)', color: '#1A1A1A', label: '1st' },
@@ -45,14 +30,75 @@ const rankColors = [
 export default function UserProfilePage() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const user = users.find(u => u.id === Number(userId));
-  if (!user) return <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>사용자를 찾을 수 없습니다</div>;
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (!userId || !currentUser) return;
 
-  const plays = userPlays[user.id] || [];
-  const topPlays = userTopPlays[user.id] || [];
-  const myPlays = ['bondage', 'discipline', 'roleplay'];
-  const matchRate = calcMatchRate(user.tendency, 'S', plays, myPlays);
+      try {
+        setLoading(true);
+
+        // Load target user profile
+        const { data: targetUser, error: userError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (userError) throw userError;
+        if (!targetUser) {
+          setError('사용자를 찾을 수 없습니다');
+          return;
+        }
+
+        // Load current user profile
+        const { data: myData, error: myError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (myError && myError.code !== 'PGRST116') throw myError;
+
+        setUserProfile(targetUser);
+        setCurrentUserProfile(myData || null);
+      } catch (err: any) {
+        setError(err.message || '프로필 로드 실패');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfiles();
+  }, [userId, currentUser]);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+        사용자 정보를 불러오는 중...
+      </div>
+    );
+  }
+
+  if (error || !userProfile) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>
+        {error || '사용자를 찾을 수 없습니다'}
+      </div>
+    );
+  }
+
+  const plays = userProfile.all_plays || [];
+  const topPlays = userProfile.top_plays || [];
+  const myPlays = currentUserProfile?.all_plays || [];
+  const matchRate = currentUserProfile
+    ? calcMatchRate(userProfile.tendency, currentUserProfile.tendency, plays, myPlays)
+    : 0;
 
   return (
     <div style={{
@@ -68,14 +114,14 @@ export default function UserProfilePage() {
         borderBottom: '1px solid rgba(255,255,255,0.04)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-          <Avatar color={user.avatar} nickname={user.nickname} size={80} online={user.online} showRing />
+          <Avatar color={userProfile.avatar} nickname={userProfile.nickname} size={80} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontSize: 22, fontWeight: 700 }}>{user.nickname}</span>
-          <TendencyBadge tendency={user.tendency} />
+          <span style={{ fontSize: 22, fontWeight: 700 }}>{userProfile.nickname}</span>
+          <TendencyBadge tendency={userProfile.tendency} />
         </div>
         <div style={{ fontSize: 14, color: '#888', marginBottom: 12 }}>
-          {user.gender} · {user.age}세 · {user.distance}
+          {userProfile.gender} · {userProfile.age}세
         </div>
 
         {/* Match Rate */}
@@ -104,89 +150,97 @@ export default function UserProfilePage() {
 
       <div style={{ padding: '20px 16px' }}>
         {/* Intro */}
-        <section style={{ marginBottom: 24 }}>
-          <h3 style={sectionTitle}>소개</h3>
-          <div style={{
-            padding: '14px 16px',
-            borderRadius: 12,
-            backgroundColor: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            fontSize: 14,
-            color: '#ccc',
-            lineHeight: 1.6,
-          }}>
-            {user.intro}
-          </div>
-        </section>
+        {userProfile.intro && (
+          <section style={{ marginBottom: 24 }}>
+            <h3 style={sectionTitle}>소개</h3>
+            <div style={{
+              padding: '14px 16px',
+              borderRadius: 12,
+              backgroundColor: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              fontSize: 14,
+              color: '#ccc',
+              lineHeight: 1.6,
+            }}>
+              {userProfile.intro}
+            </div>
+          </section>
+        )}
 
         {/* Top 3 Plays */}
-        <section style={{ marginBottom: 24 }}>
-          <h3 style={sectionTitle}>최애플 TOP 3</h3>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {topPlays.slice(0, 3).map((playId, idx) => {
-              const play = playTypes.find(p => p.id === playId);
-              if (!play) return null;
-              return (
-                <div key={playId} style={{
-                  flex: 1,
-                  padding: '16px 8px',
-                  borderRadius: 14,
-                  textAlign: 'center',
-                  backgroundColor: 'rgba(26,26,26,0.9)',
-                  border: '1px solid rgba(201, 169, 110, 0.2)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                }}>
-                  <span style={{
-                    display: 'inline-block',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    background: rankColors[idx].bg,
-                    color: rankColors[idx].color,
-                    padding: '2px 10px',
-                    borderRadius: 8,
-                    marginBottom: 8,
-                  }}>{rankColors[idx].label}</span>
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>{play.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#E8D5B0' }}>{play.name}</div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        {topPlays.length > 0 && (
+          <section style={{ marginBottom: 24 }}>
+            <h3 style={sectionTitle}>최애플 TOP 3</h3>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {topPlays.slice(0, 3).map((playId, idx) => {
+                const play = playTypes.find(p => p.id === playId);
+                if (!play) return null;
+                return (
+                  <div key={playId} style={{
+                    flex: 1,
+                    padding: '16px 8px',
+                    borderRadius: 14,
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(26,26,26,0.9)',
+                    border: '1px solid rgba(201, 169, 110, 0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  }}>
+                    <span style={{
+                      display: 'inline-block',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      background: rankColors[idx].bg,
+                      color: rankColors[idx].color,
+                      padding: '2px 10px',
+                      borderRadius: 8,
+                      marginBottom: 8,
+                    }}>{rankColors[idx].label}</span>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>
+                      <Icon name={play.icon} size={24} color="#C9A96E" />
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#E8D5B0' }}>{play.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* All Play Tags */}
-        <section style={{ marginBottom: 24 }}>
-          <h3 style={sectionTitle}>관심 플레이</h3>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {plays.map(playId => {
-              const play = playTypes.find(p => p.id === playId);
-              if (!play) return null;
-              const isShared = myPlays.includes(playId);
-              return (
-                <span key={playId} style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  color: isShared ? '#C9A96E' : '#999',
-                  backgroundColor: isShared ? 'rgba(201,169,110,0.08)' : 'rgba(255,255,255,0.02)',
-                  padding: '6px 14px',
-                  borderRadius: 12,
-                  border: isShared ? '1px solid rgba(201,169,110,0.25)' : '1px solid rgba(255,255,255,0.06)',
-                }}>
-                  <span>{play.icon}</span>
-                  <span>{play.name}</span>
-                  {isShared && <span style={{ fontSize: 10, color: '#C9A96E' }}>공통</span>}
-                </span>
-              );
-            })}
-          </div>
-        </section>
+        {plays.length > 0 && (
+          <section style={{ marginBottom: 24 }}>
+            <h3 style={sectionTitle}>관심 플레이</h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {plays.map(playId => {
+                const play = playTypes.find(p => p.id === playId);
+                if (!play) return null;
+                const isShared = myPlays.includes(playId);
+                return (
+                  <span key={playId} style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 13,
+                    color: isShared ? '#C9A96E' : '#999',
+                    backgroundColor: isShared ? 'rgba(201,169,110,0.08)' : 'rgba(255,255,255,0.02)',
+                    padding: '6px 14px',
+                    borderRadius: 12,
+                    border: isShared ? '1px solid rgba(201,169,110,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    <Icon name={play.icon} size={16} color="currentColor" />
+                    <span>{play.name}</span>
+                    {isShared && <span style={{ fontSize: 10, color: '#C9A96E' }}>공통</span>}
+                  </span>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           <button
-            onClick={() => navigate(`/chat/${user.id}`)}
+            onClick={() => navigate(`/chat/${userProfile.id}`)}
             style={{
               flex: 1,
               padding: '14px 0',
@@ -201,6 +255,24 @@ export default function UserProfilePage() {
             }}
           >
             쪽지 보내기
+          </button>
+          <button
+            onClick={() => navigate('/more')}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 14,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="차단 및 신고"
+          >
+            <Icon name="more" size={20} color="#fff" />
           </button>
         </div>
       </div>
