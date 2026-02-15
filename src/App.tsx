@@ -49,18 +49,29 @@ function App() {
     checkProfile();
   }, [user]);
 
-  // 로그인 시 위치 저장
+  // 로그인 시 위치 저장 + 접속 시간 업데이트
   useEffect(() => {
     if (!user || hasProfile !== true) return;
     getCurrentPosition()
       .then(({ latitude, longitude }) => {
         supabase
           .from('profiles')
-          .update({ latitude, longitude })
+          .update({
+            latitude,
+            longitude,
+            last_active_at: new Date().toISOString()
+          })
           .eq('id', user.id)
           .then(() => {});
       })
-      .catch(() => {});
+      .catch(() => {
+        // 위치 권한 없어도 접속 시간은 업데이트
+        supabase
+          .from('profiles')
+          .update({ last_active_at: new Date().toISOString() })
+          .eq('id', user.id)
+          .then(() => {});
+      });
   }, [user, hasProfile]);
 
   // 프로필 없으면 /register로 이동

@@ -22,6 +22,7 @@ interface UserProfile {
   all_plays: string[];
   top_plays: string[];
   distance_km?: number;
+  last_active_at?: string;
 }
 
 const subTabs = ['근처여자', '근처남자', '최근여자', '최근남자'];
@@ -107,9 +108,26 @@ export default function NearbyPage() {
     } else {
       if (u.gender !== '남') return false;
     }
+
+    // Tab-based filter (근처 vs 최근)
+    if (activeTab === '근처여자' || activeTab === '근처남자') {
+      // 근처: 20km 이내
+      if ((u.distance_km || 999) > 20) return false;
+    } else if (activeTab === '최근여자' || activeTab === '최근남자') {
+      // 최근: 10시간 이내 접속
+      if (u.last_active_at) {
+        const now = new Date();
+        const lastActive = new Date(u.last_active_at + (u.last_active_at.endsWith('Z') ? '' : 'Z'));
+        const diffHours = (now.getTime() - lastActive.getTime()) / 3600000;
+        if (diffHours > 10) return false;
+      } else {
+        return false; // last_active_at 없으면 제외
+      }
+    }
+
     // Tendency filter
     if (tendencyFilter !== '전체' && u.tendency !== tendencyFilter) return false;
-    // Distance filter
+    // Distance filter (추가 필터용)
     if (distanceFilter !== '전체') {
       const maxDist = parseDistance(distanceFilter);
       if ((u.distance_km || 0) > maxDist) return false;
@@ -130,11 +148,13 @@ export default function NearbyPage() {
       : 0,
   }));
 
-  // 최신순으로 정렬 (실제로는 생성 시간으로 정렬)
+  // 정렬
   const sorted = filteredWithMatch.sort((a, b) => {
     if (activeTab.includes('최근')) {
-      // 최근순: 생성 시간 내림차순
-      return 0; // 목데이터이므로 유지
+      // 최근순: 접속 시간 내림차순 (최근 접속이 위로)
+      const aTime = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
+      const bTime = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+      return bTime - aTime;
     }
     // 근처순: 거리 오름차순
     return (a.distance_km || 0) - (b.distance_km || 0);
@@ -154,6 +174,22 @@ export default function NearbyPage() {
   const handleTalkSuccess = () => {
     // Cai +30
     setCai(prev => prev + 30);
+  };
+
+  const getTimeAgo = (date: string | undefined): string => {
+    if (!date) return '';
+    const now = new Date();
+    const then = new Date(date + (date.endsWith('Z') ? '' : 'Z'));
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return '방금 전';
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 30) return `${diffDays}일 전`;
+    return then.toLocaleDateString('ko-KR');
   };
 
   return (
@@ -325,8 +361,17 @@ export default function NearbyPage() {
                     {user.nickname}
                   </span>
                   <span style={{ fontSize: 12, color: '#888' }}>
-                    ({user.gender}{user.age}세) {user.distance_km?.toFixed(1)}km
+                    ({user.gender}{user.age}세)
                   </span>
+                </div>
+                <div style={{ fontSize: 12, color: '#888', marginBottom: 5 }}>
+                  <span>{user.distance_km?.toFixed(1)}km</span>
+                  {user.last_active_at && (
+                    <>
+                      <span style={{ margin: '0 6px', color: '#555' }}>•</span>
+                      <span>{getTimeAgo(user.last_active_at)} 접속</span>
+                    </>
+                  )}
                 </div>
                 <div
                   style={{
