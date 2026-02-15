@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import SubTabs from '../components/SubTabs';
 import TendencyBadge from '../components/TendencyBadge';
+import TalkWriteModal from '../components/TalkWriteModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,7 +21,7 @@ interface TalkPost {
   distance_km: number;
 }
 
-const subTabs = ['전체', '지역', '등네', '근처', '내토크', '토크쓰기'];
+const subTabs = ['전체', '지역', '등네', '근처', '내토크'];
 const distanceFilters = ['전체', '10km', '20km', '50km'];
 
 export default function TalkPage() {
@@ -30,6 +31,7 @@ export default function TalkPage() {
   const [distanceFilter, setDistanceFilter] = useState('전체');
   const [posts, setPosts] = useState<TalkPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWriteModal, setShowWriteModal] = useState(false);
 
   // Load talk posts
   useEffect(() => {
@@ -87,10 +89,6 @@ export default function TalkPage() {
   }, [activeTab, currentUser?.id]);
 
   const handleTabSelect = (tab: string) => {
-    if (tab === '토크쓰기') {
-      navigate('/talk/write');
-      return;
-    }
     setActiveTab(tab);
     setDistanceFilter('전체'); // Reset distance filter when changing tabs
   };
@@ -123,7 +121,26 @@ export default function TalkPage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
-      <Header />
+      <Header
+        right={
+          <button
+            onClick={() => setShowWriteModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #8B0000, #5C0029)',
+              color: '#fff',
+              fontSize: 13,
+              padding: '5px 12px',
+              borderRadius: 8,
+              fontWeight: 600,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
+              cursor: 'pointer',
+            }}
+          >
+            토크쓰기
+          </button>
+        }
+      />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={handleTabSelect} />
 
       {/* Distance Filter for 근처 tab */}
@@ -237,6 +254,18 @@ export default function TalkPage() {
           ))
         )}
       </div>
+
+      {/* Talk Write Modal */}
+      {showWriteModal && (
+        <TalkWriteModal
+          onClose={() => setShowWriteModal(false)}
+          onSuccess={() => {
+            setShowWriteModal(false);
+            // Reload posts
+            setLoading(true);
+          }}
+        />
+      )}
     </div>
   );
 }
