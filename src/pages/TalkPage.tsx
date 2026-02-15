@@ -131,8 +131,8 @@ export default function TalkPage() {
 
   const getTimeAgo = (date: string): string => {
     const now = new Date();
-    // Supabase returns UTC timestamp, convert to local time
-    const then = new Date(date + (date.endsWith('Z') ? '' : 'Z'));
+    const then = new Date(date.endsWith('Z') || date.includes('+') ? date : date + 'Z');
+    if (isNaN(then.getTime())) return '';
     const diffMs = now.getTime() - then.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
