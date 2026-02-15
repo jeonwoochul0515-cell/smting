@@ -3,12 +3,15 @@ import { users, chatMessages } from '../data/mockData';
 import Header from '../components/Header';
 import TendencyBadge from '../components/TendencyBadge';
 import Avatar from '../components/Avatar';
+import ReportModal from '../components/ReportModal';
 import { useState } from 'react';
 
 export default function ChatPage() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [input, setInput] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   const user = users.find(u => u.id === Number(userId)) || users[0];
 
@@ -22,6 +25,19 @@ export default function ChatPage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <TendencyBadge tendency={user.tendency} />
             <span style={{ fontSize: 12, color: '#C9A96E', fontWeight: 600 }}>궁합 {user.matchRate}%</span>
+            <button
+              onClick={() => setShowMenu(true)}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                fontSize: 16,
+                padding: '2px 8px',
+                borderRadius: 6,
+                marginLeft: 4,
+              }}
+            >
+              ⋮
+            </button>
           </div>
         }
       />
@@ -91,6 +107,20 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+
+        {blocked && (
+          <div style={{
+            textAlign: 'center',
+            padding: '16px',
+            backgroundColor: 'rgba(255,68,68,0.06)',
+            borderRadius: 12,
+            border: '1px solid rgba(255,68,68,0.15)',
+            color: '#FF6B6B',
+            fontSize: 13,
+          }}>
+            이 사용자를 차단했습니다
+          </div>
+        )}
       </div>
 
       <div style={{
@@ -104,7 +134,8 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="메시지를 입력하세요..."
+          placeholder={blocked ? '차단된 사용자입니다' : '메시지를 입력하세요...'}
+          disabled={blocked}
           style={{
             flex: 1,
             padding: '10px 16px',
@@ -115,18 +146,30 @@ export default function ChatPage() {
             fontSize: 14,
           }}
         />
-        <button style={{
-          background: 'linear-gradient(135deg, #8B0000, #5C0029)',
-          color: '#fff',
-          borderRadius: 20,
-          padding: '0 20px',
-          fontSize: 14,
-          fontWeight: 600,
-          boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
-        }}>
+        <button
+          disabled={blocked}
+          style={{
+            background: blocked ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, #8B0000, #5C0029)',
+            color: blocked ? '#555' : '#fff',
+            borderRadius: 20,
+            padding: '0 20px',
+            fontSize: 14,
+            fontWeight: 600,
+            boxShadow: blocked ? 'none' : '0 2px 8px rgba(139,0,0,0.3)',
+          }}
+        >
           전송
         </button>
       </div>
+
+      {showMenu && (
+        <ReportModal
+          nickname={user.nickname}
+          mode="menu"
+          onClose={() => setShowMenu(false)}
+          onBlock={() => setBlocked(true)}
+        />
+      )}
     </div>
   );
 }

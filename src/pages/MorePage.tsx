@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
@@ -13,30 +14,36 @@ const myProfile = {
 };
 
 const menuItems = [
-  { label: '프로필 수정', icon: '✏️' },
-  { label: '성향 설정', icon: '⚙️' },
-  { label: '차단 관리', icon: '🚫' },
-  { label: '알림 설정', icon: '🔔' },
-  { label: '이용약관', icon: '📄' },
-  { label: '고객센터', icon: '💡' },
-  { label: '로그아웃', icon: '🚪' },
+  { label: '프로필 수정', icon: '✏️', path: '/profile/edit' },
+  { label: '성향 설정', icon: '⚙️', path: '/profile/edit' },
+  { label: '차단 관리', icon: '🚫', path: '/block-list' },
+  { label: '알림 설정', icon: '🔔', path: '' },
+  { label: '이용약관', icon: '📄', path: '' },
+  { label: '고객센터', icon: '💡', path: '' },
+  { label: '로그아웃', icon: '🚪', path: '/' },
 ];
 
 export default function MorePage() {
+  const navigate = useNavigate();
+
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header />
 
       {/* Profile Card */}
-      <div style={{
-        margin: 16,
-        padding: 22,
-        backgroundColor: 'rgba(26, 26, 26, 0.8)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: 18,
-        border: '1px solid rgba(201, 169, 110, 0.12)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-      }}>
+      <div
+        onClick={() => navigate('/profile/edit')}
+        style={{
+          margin: 16,
+          padding: 22,
+          backgroundColor: 'rgba(26, 26, 26, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: 18,
+          border: '1px solid rgba(201, 169, 110, 0.12)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          cursor: 'pointer',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
           <Avatar color={myProfile.avatar} nickname={myProfile.nickname} size={64} online showRing />
           <div>
@@ -48,6 +55,7 @@ export default function MorePage() {
               {myProfile.gender} · {myProfile.age}세
             </span>
           </div>
+          <span style={{ marginLeft: 'auto', color: '#C9A96E', fontSize: 14 }}>편집 ›</span>
         </div>
         <div style={{ fontSize: 14, color: '#bbb', marginBottom: 14, lineHeight: 1.5 }}>{myProfile.intro}</div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -71,13 +79,14 @@ export default function MorePage() {
         {menuItems.map((item, i) => (
           <div
             key={item.label}
+            onClick={() => item.path && navigate(item.path)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 14,
               padding: '15px 6px',
               borderBottom: '1px solid rgba(255,255,255,0.04)',
-              cursor: 'pointer',
+              cursor: item.path ? 'pointer' : 'default',
               fontSize: 15,
               animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
               transition: 'background-color 0.2s',

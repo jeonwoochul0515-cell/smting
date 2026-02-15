@@ -10,8 +10,10 @@ import ThemePage from './pages/ThemePage';
 import MessagesPage from './pages/MessagesPage';
 import ChatPage from './pages/ChatPage';
 import MorePage from './pages/MorePage';
+import ProfileEditPage from './pages/ProfileEditPage';
+import BlockListPage from './pages/BlockListPage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list'];
 
 function App() {
   const location = useLocation();
@@ -26,6 +28,8 @@ function App() {
           <Route path="/permissions" element={<PermissionsPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/chat/:userId" element={<ChatPage />} />
+          <Route path="/profile/edit" element={<ProfileEditPage />} />
+          <Route path="/block-list" element={<BlockListPage />} />
         </Routes>
       ) : (
         <>
