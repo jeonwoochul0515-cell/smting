@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
-import LandingPage from './pages/LandingPage';
-import VerifyPage from './pages/VerifyPage';
+import LoadingScreen from './components/LoadingScreen';
+import AuthPage from './pages/AuthPage';
 import PermissionsPage from './pages/PermissionsPage';
 import RegisterPage from './pages/RegisterPage';
 import TalkPage from './pages/TalkPage';
@@ -21,20 +22,37 @@ const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/
 
 function App() {
   const location = useLocation();
+  const { user, loading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
 
+  // 첫 로드 중 스플래시 + 로딩 화면
+  if (showSplash) {
+    return <SplashScreen onDone={() => setShowSplash(false)} />;
+  }
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // 로그인하지 않으면 AuthPage로
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/" element={<AuthPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // 로그인 후 라우팅
   const isFullScreen = fullScreenPaths.includes(location.pathname)
     || location.pathname.startsWith('/chat/')
     || location.pathname.startsWith('/user/');
 
   return (
     <div>
-      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
-
       {isFullScreen ? (
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/verify" element={<VerifyPage />} />
           <Route path="/permissions" element={<PermissionsPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/chat/:userId" element={<ChatPage />} />
@@ -42,6 +60,7 @@ function App() {
           <Route path="/block-list" element={<BlockListPage />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
           <Route path="/talk/write" element={<TalkWritePage />} />
+          <Route path="*" element={<Navigate to="/nearby" replace />} />
         </Routes>
       ) : (
         <>

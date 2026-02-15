@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Avatar from '../components/Avatar';
 import TendencyBadge from '../components/TendencyBadge';
@@ -21,11 +22,12 @@ const menuItems = [
   { label: '알림 설정', icon: 'bell', path: '' },
   { label: '이용약관', icon: 'doc', path: '' },
   { label: '고객센터', icon: 'help', path: '' },
-  { label: '로그아웃', icon: 'logout', path: '/' },
+  { label: '로그아웃', icon: 'logout', path: '', action: 'logout' },
 ];
 
 export default function MorePage() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   return (
     <div style={{ paddingBottom: 60 }}>
@@ -80,14 +82,20 @@ export default function MorePage() {
         {menuItems.map((item, i) => (
           <div
             key={item.label}
-            onClick={() => item.path && navigate(item.path)}
+            onClick={async () => {
+              if (item.action === 'logout') {
+                await signOut();
+              } else if (item.path) {
+                navigate(item.path);
+              }
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 14,
               padding: '15px 6px',
               borderBottom: '1px solid rgba(255,255,255,0.04)',
-              cursor: item.path ? 'pointer' : 'default',
+              cursor: 'pointer',
               fontSize: 15,
               animation: `fadeIn 0.3s ease ${i * 0.05}s both`,
               transition: 'background-color 0.2s',
