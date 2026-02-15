@@ -9,17 +9,13 @@ interface TalkWriteModalProps {
 
 export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalProps) {
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('전체');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = ['전체', '서신', '지역', '등네', '근처', '내토크'];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !title.trim()) return;
+    if (!user || !content.trim()) return;
 
     setLoading(true);
     setError('');
@@ -30,9 +26,9 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
         .from('talk_posts')
         .insert([{
           user_id: user.id,
-          title,
+          title: content.slice(0, 100), // Use first 100 chars as title
           content,
-          category,
+          category: '전체',
         }]);
 
       if (postError) throw postError;
@@ -125,89 +121,13 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Category */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#C9A96E',
-              marginBottom: 8,
-            }}>
-              카테고리
-            </label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: category === cat ? '#fff' : '#777',
-                    background: category === cat
-                      ? 'linear-gradient(135deg, #8B0000, #5C0029)'
-                      : 'rgba(255,255,255,0.04)',
-                    border: category === cat ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#C9A96E',
-              marginBottom: 8,
-            }}>
-              제목
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="토크 제목을 입력하세요"
-              required
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.08)',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                color: '#F0F0F0',
-                fontSize: 14,
-                outline: 'none',
-              }}
-            />
-          </div>
-
           {/* Content */}
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#C9A96E',
-              marginBottom: 8,
-            }}>
-              내용
-            </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="토크 내용을 입력하세요"
-              rows={5}
+              placeholder="토크를 작성하세요"
+              rows={8}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -243,20 +163,20 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
             </button>
             <button
               type="submit"
-              disabled={loading || !title.trim()}
+              disabled={loading || !content.trim()}
               style={{
                 flex: 1,
                 padding: '12px 0',
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 700,
-                color: loading || !title.trim() ? '#555' : '#fff',
-                background: loading || !title.trim()
+                color: loading || !content.trim() ? '#555' : '#fff',
+                background: loading || !content.trim()
                   ? 'rgba(255,255,255,0.04)'
                   : 'linear-gradient(135deg, #8B0000, #5C0029)',
                 border: 'none',
-                cursor: loading || !title.trim() ? 'default' : 'pointer',
-                boxShadow: (loading || !title.trim())
+                cursor: loading || !content.trim() ? 'default' : 'pointer',
+                boxShadow: (loading || !content.trim())
                   ? 'none'
                   : '0 2px 12px rgba(139,0,0,0.3)',
                 transition: 'all 0.2s',
