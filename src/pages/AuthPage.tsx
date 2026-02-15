@@ -23,7 +23,7 @@ export default function AuthPage() {
       } else {
         await signIn(email, password);
       }
-      navigate('/permissions');
+      navigate('/nearby');
     } catch (err: any) {
       let errorMessage = err.message || '오류가 발생했습니다';
 

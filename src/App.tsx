@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { supabase } from './lib/supabase';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 import LoadingScreen from './components/LoadingScreen';
@@ -22,15 +23,44 @@ const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+
+  // 로그인 후 프로필 존재 여부 확인
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!user) {
+        setHasProfile(null);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      setHasProfile(!!data);
+    };
+
+    checkProfile();
+  }, [user]);
+
+  // 프로필 없으면 /register로 이동
+  useEffect(() => {
+    if (user && hasProfile === false && location.pathname !== '/register') {
+      navigate('/register', { replace: true });
+    }
+  }, [user, hasProfile, location.pathname, navigate]);
 
   // 첫 로드 중 스플래시 + 로딩 화면
   if (showSplash) {
     return <SplashScreen onDone={() => setShowSplash(false)} />;
   }
 
-  if (loading) {
+  if (loading || (user && hasProfile === null)) {
     return <LoadingScreen />;
   }
 

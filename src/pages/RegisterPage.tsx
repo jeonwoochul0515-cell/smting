@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency, Gender } from '../data/mockData';
 import Icon from '../components/Icon';
@@ -15,7 +14,6 @@ const rankColors = [
 ];
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -68,7 +66,7 @@ export default function RegisterPage() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .insert([{
+        .upsert([{
           id: user.id,
           nickname,
           age: parseInt(age),
@@ -81,7 +79,8 @@ export default function RegisterPage() {
         }]);
 
       if (error) throw error;
-      navigate('/nearby');
+      // Force page reload to re-check profile in App
+      window.location.href = '/nearby';
     } catch (err: any) {
       alert('프로필 저장 실패: ' + err.message);
     } finally {
