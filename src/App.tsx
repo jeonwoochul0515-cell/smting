@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import BottomNav from './components/BottomNav';
+import TalkPage from './pages/TalkPage';
+import NearbyPage from './pages/NearbyPage';
+import ThemePage from './pages/ThemePage';
+import MessagesPage from './pages/MessagesPage';
+import ChatPage from './pages/ChatPage';
+import MorePage from './pages/MorePage';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {children}
+      <BottomNav />
     </>
-  )
+  );
 }
 
-export default App
+function App() {
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat/');
+
+  return (
+    <div>
+      {isChatPage ? (
+        <Routes>
+          <Route path="/chat/:userId" element={<ChatPage />} />
+        </Routes>
+      ) : (
+        <Layout>
+          <Routes>
+            <Route path="/talk" element={<TalkPage />} />
+            <Route path="/nearby" element={<NearbyPage />} />
+            <Route path="/theme" element={<ThemePage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/more" element={<MorePage />} />
+            <Route path="*" element={<Navigate to="/nearby" replace />} />
+          </Routes>
+        </Layout>
+      )}
+    </div>
+  );
+}
+
+export default App;
