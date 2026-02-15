@@ -26,37 +26,32 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
         .from('talk_posts')
         .insert([{
           user_id: user.id,
-          title: content.slice(0, 100), // Use first 100 chars as title
+          title: content.slice(0, 100),
           content,
           category: '전체',
         }]);
 
       if (postError) throw postError;
 
-      // Cai +30 추가
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('cai')
-        .eq('id', user.id)
-        .single();
+      // Cai +30 추가 (실패해도 토크는 이미 저장됨)
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('cai')
+          .eq('id', user.id)
+          .single();
 
-      const newCai = (profile?.cai || 0) + 30;
+        await supabase
+          .from('profiles')
+          .update({ cai: (profile?.cai || 0) + 30 })
+          .eq('id', user.id);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ cai: newCai })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      // 거래 내역 기록
-      await supabase
-        .from('cai_transactions')
-        .insert([{
-          user_id: user.id,
-          amount: 30,
-          reason: 'talk_post',
-        }]);
+        await supabase
+          .from('cai_transactions')
+          .insert([{ user_id: user.id, amount: 30, reason: 'talk_post' }]);
+      } catch {
+        console.error('Cai update failed, but talk post saved');
+      }
 
       onSuccess();
     } catch (err: any) {
