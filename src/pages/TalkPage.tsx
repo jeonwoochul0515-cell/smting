@@ -183,6 +183,7 @@ export default function TalkPage() {
           filteredPosts.map((post, i) => (
             <div
               key={post.id}
+              onClick={() => navigate(`/talk/${post.id}`)}
               style={{
                 display: 'flex',
                 alignItems: 'center',

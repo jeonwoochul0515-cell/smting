@@ -1,3 +1,5 @@
+import { useUnreadCount } from '../context/NotificationContext';
+
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
@@ -7,6 +9,8 @@ interface HeaderProps {
 }
 
 export default function Header({ title = 'SMting', showBack, onBack, right, cai }: HeaderProps) {
+  const { unreadCount } = useUnreadCount();
+
   return (
     <header style={{
       display: 'flex',
@@ -58,7 +62,24 @@ export default function Header({ title = 'SMting', showBack, onBack, right, cai 
           )}
         </div>
       </div>
-      {right && <div>{right}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {unreadCount > 0 && (
+          <div style={{
+            backgroundColor: '#FF4444',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '3px 7px',
+            borderRadius: 10,
+            minWidth: 20,
+            textAlign: 'center',
+            boxShadow: '0 2px 8px rgba(255, 68, 68, 0.4)',
+          }}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </div>
+        )}
+        {right && <div>{right}</div>}
+      </div>
     </header>
   );
 }

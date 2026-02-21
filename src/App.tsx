@@ -10,6 +10,7 @@ import AuthPage from './pages/AuthPage';
 import PermissionsPage from './pages/PermissionsPage';
 import RegisterPage from './pages/RegisterPage';
 import TalkPage from './pages/TalkPage';
+import TalkDetailPage from './pages/TalkDetailPage';
 import TalkWritePage from './pages/TalkWritePage';
 import NearbyPage from './pages/NearbyPage';
 import ThemePage from './pages/ThemePage';
@@ -20,7 +21,7 @@ import ProfileEditPage from './pages/ProfileEditPage';
 import BlockListPage from './pages/BlockListPage';
 import UserProfilePage from './pages/UserProfilePage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId'];
 
 function App() {
   const location = useLocation();
@@ -103,7 +104,8 @@ function App() {
   // 로그인 후 라우팅
   const isFullScreen = fullScreenPaths.includes(location.pathname)
     || location.pathname.startsWith('/chat/')
-    || location.pathname.startsWith('/user/');
+    || location.pathname.startsWith('/user/')
+    || location.pathname.startsWith('/talk/');
 
   return (
     <div>
@@ -116,6 +118,7 @@ function App() {
           <Route path="/block-list" element={<BlockListPage />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
           <Route path="/talk/write" element={<TalkWritePage />} />
+          <Route path="/talk/:postId" element={<TalkDetailPage />} />
           <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (

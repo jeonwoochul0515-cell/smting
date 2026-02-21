@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
+import { useUnreadCount } from '../context/NotificationContext';
 
 const tabs = [
   { path: '/talk', label: '토크', icon: 'chat' },
@@ -12,6 +13,7 @@ const tabs = [
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { unreadCount } = useUnreadCount();
 
   return (
     <nav style={{
@@ -30,6 +32,8 @@ export default function BottomNav() {
     }}>
       {tabs.map(tab => {
         const isActive = location.pathname.startsWith(tab.path);
+        const showBadge = tab.path === '/messages' && unreadCount > 0;
+
         return (
           <button
             key={tab.path}
@@ -49,7 +53,27 @@ export default function BottomNav() {
               transition: 'color 0.2s',
             }}
           >
-            <Icon name={tab.icon} size={20} color={isActive ? '#C9A96E' : '#555'} />
+            <div style={{ position: 'relative' }}>
+              <Icon name={tab.icon} size={20} color={isActive ? '#C9A96E' : '#555'} />
+              {showBadge && (
+                <div style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -8,
+                  backgroundColor: '#FF4444',
+                  color: '#fff',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  padding: '2px 5px',
+                  borderRadius: 8,
+                  minWidth: 16,
+                  textAlign: 'center',
+                  boxShadow: '0 2px 6px rgba(255, 68, 68, 0.5)',
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </div>
+              )}
+            </div>
             <span style={{
               fontWeight: isActive ? 700 : 400,
               fontSize: 10,
