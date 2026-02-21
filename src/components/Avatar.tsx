@@ -1,19 +1,25 @@
+import { useState } from 'react';
+
 interface AvatarProps {
   color: string;
   size?: number;
   online?: boolean;
   nickname: string;
   showRing?: boolean;
+  imageUrl?: string | null;
 }
 
-export default function Avatar({ color, size = 48, online, nickname, showRing }: AvatarProps) {
+export default function Avatar({ color, size = 48, online, nickname, showRing, imageUrl }: AvatarProps) {
+  const [imageError, setImageError] = useState(false);
+  const showImage = imageUrl && !imageError;
+
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       <div style={{
         width: size,
         height: size,
         borderRadius: '50%',
-        background: `linear-gradient(135deg, ${color}, ${color}CC)`,
+        background: showImage ? 'transparent' : `linear-gradient(135deg, ${color}, ${color}CC)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -24,8 +30,22 @@ export default function Avatar({ color, size = 48, online, nickname, showRing }:
         boxShadow: showRing
           ? '0 0 12px rgba(201, 169, 110, 0.25)'
           : '0 2px 8px rgba(0,0,0,0.3)',
+        overflow: 'hidden',
       }}>
-        {nickname.charAt(0)}
+        {showImage ? (
+          <img
+            src={imageUrl}
+            alt={nickname}
+            onError={() => setImageError(true)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          nickname.charAt(0)
+        )}
       </div>
       {online !== undefined && (
         <span style={{

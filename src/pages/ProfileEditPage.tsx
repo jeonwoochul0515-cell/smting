@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { playTypes } from '../data/mockData';
 import type { Tendency } from '../data/mockData';
 import Header from '../components/Header';
 import Icon from '../components/Icon';
+import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { uploadAndSetAvatar, removeAvatar } from '../utils/imageUpload';
 
 const avatarColors = ['#8B0000', '#A0153E', '#5C0029', '#2D033B', '#3D0C11', '#6B0848', '#4A0080', '#005C5C'];
 
@@ -18,16 +20,20 @@ const rankColors = [
 export default function ProfileEditPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [nickname, setNickname] = useState('나의프로필');
   const [age, setAge] = useState('28');
   const [intro, setIntro] = useState('매너 있는 S입니다. 대화부터 시작해요.');
   const [tendency, setTendency] = useState<Tendency>('S');
   const [avatarColor, setAvatarColor] = useState('#8B0000');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [selectedPlays, setSelectedPlays] = useState<string[]>(['bondage', 'discipline', 'roleplay']);
   const [topPlays, setTopPlays] = useState<string[]>(['bondage', 'discipline', 'roleplay']);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // 앱 로드 시 DB에서 프로필 데이터 불러오기
   useEffect(() => {
@@ -48,6 +54,7 @@ export default function ProfileEditPage() {
           setIntro(data.intro || '');
           setTendency(data.tendency || 'S');
           setAvatarColor(data.avatar || '#8B0000');
+          setAvatarUrl(data.avatar_url || null);
           setSelectedPlays(data.all_plays || []);
           setTopPlays(data.top_plays || []);
         }
@@ -74,6 +81,64 @@ export default function ProfileEditPage() {
       if (prev.length >= 3) return prev;
       return [...prev, id];
     });
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 100);
+
+      const result = await uploadAndSetAvatar(user.id, file, avatarUrl);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (result.success) {
+        setAvatarUrl(result.url);
+        setTimeout(() => setUploadProgress(0), 500);
+      } else {
+        alert(result.error);
+        setUploadProgress(0);
+      }
+    } catch (err) {
+      console.error('Image upload error:', err);
+      alert('이미지 업로드 중 오류가 발생했습니다.');
+      setUploadProgress(0);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user || !avatarUrl) return;
+
+    if (!confirm('프로필 사진을 삭제하시겠습니까?')) return;
+
+    setUploading(true);
+    try {
+      const result = await removeAvatar(user.id, avatarUrl);
+      if (result.success) {
+        setAvatarUrl(null);
+      } else {
+        alert(result.error);
+      }
+    } catch (err) {
+      console.error('Remove avatar error:', err);
+      alert('이미지 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -113,9 +178,125 @@ export default function ProfileEditPage() {
       <Header title="프로필 수정" showBack onBack={() => navigate(-1)} />
 
       <div style={{ padding: '20px 16px', paddingBottom: 100 }}>
+        {/* Profile Image Upload */}
+        <section style={{ marginBottom: 28 }}>
+          <label style={labelStyle}>프로필 사진</label>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            padding: 20,
+            borderRadius: 16,
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            {/* Avatar Preview */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+            }}>
+              <Avatar
+                color={avatarColor}
+                size={80}
+                nickname={nickname}
+                imageUrl={avatarUrl}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 13,
+                  color: '#888',
+                  marginBottom: 8,
+                  lineHeight: 1.5,
+                }}>
+                  {avatarUrl ? '프로필 사진이 설정되었습니다' : '프로필 사진을 업로드하거나 아래에서 컬러를 선택하세요'}
+                </div>
+                {avatarUrl && (
+                  <button
+                    onClick={handleRemoveAvatar}
+                    disabled={uploading}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#FF4444',
+                      background: 'rgba(255,68,68,0.1)',
+                      border: '1px solid rgba(255,68,68,0.3)',
+                      cursor: uploading ? 'default' : 'pointer',
+                      opacity: uploading ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    사진 삭제
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Upload Button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 600,
+                color: uploading ? '#666' : '#E8D5B0',
+                background: uploading ? 'rgba(255,255,255,0.02)' : 'rgba(201,169,110,0.08)',
+                border: uploading ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(201,169,110,0.25)',
+                cursor: uploading ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <Icon name="camera" size={18} color="currentColor" />
+              <span>{uploading ? '업로드 중...' : '사진 선택'}</span>
+            </button>
+
+            {/* Upload Progress */}
+            {uploadProgress > 0 && (
+              <div style={{
+                width: '100%',
+                height: 4,
+                borderRadius: 2,
+                background: 'rgba(255,255,255,0.1)',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${uploadProgress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #C9A96E, #E8D5B0)',
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            )}
+
+            {/* File Info */}
+            <div style={{
+              fontSize: 11,
+              color: '#666',
+              lineHeight: 1.5,
+            }}>
+              JPG, PNG, WEBP 형식 지원 • 최대 5MB
+            </div>
+          </div>
+        </section>
+
         {/* Avatar Color */}
         <section style={{ marginBottom: 28 }}>
-          <label style={labelStyle}>프로필 컬러</label>
+          <label style={labelStyle}>프로필 컬러 (사진 미설정시 표시)</label>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {avatarColors.map(c => (
               <button

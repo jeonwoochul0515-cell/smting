@@ -17,6 +17,7 @@ interface UserProfile {
   tendency: Tendency;
   intro: string;
   avatar: string;
+  avatar_url?: string | null;
   all_plays: string[];
   top_plays: string[];
 }
@@ -114,7 +115,7 @@ export default function UserProfilePage() {
         borderBottom: '1px solid rgba(255,255,255,0.04)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-          <Avatar color={userProfile.avatar} nickname={userProfile.nickname} size={80} />
+          <Avatar color={userProfile.avatar} nickname={userProfile.nickname} size={80} imageUrl={userProfile.avatar_url} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
           <span style={{ fontSize: 22, fontWeight: 700 }}>{userProfile.nickname}</span>

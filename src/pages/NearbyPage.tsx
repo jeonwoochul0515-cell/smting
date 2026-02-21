@@ -19,6 +19,7 @@ interface UserProfile {
   tendency: Tendency;
   intro: string;
   avatar: string;
+  avatar_url?: string | null;
   all_plays: string[];
   top_plays: string[];
   distance_km?: number;
@@ -194,7 +195,7 @@ export default function NearbyPage() {
                 (e.currentTarget.style.backgroundColor = 'transparent')
               }
             >
-              <Avatar color={user.avatar} nickname={user.nickname} />
+              <Avatar color={user.avatar} nickname={user.nickname} imageUrl={user.avatar_url} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* 1행: 성향뱃지 + 닉네임 + 나이 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>

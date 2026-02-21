@@ -14,6 +14,7 @@ interface UserProfile {
   gender: string;
   tendency: string;
   avatar: string;
+  avatar_url?: string | null;
 }
 
 interface Message {
@@ -210,7 +211,7 @@ export default function ChatPage() {
             >
               {!isSender(msg) && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <Avatar color={otherUser.avatar} nickname={otherUser.nickname} size={34} />
+                  <Avatar color={otherUser.avatar} nickname={otherUser.nickname} size={34} imageUrl={otherUser.avatar_url} />
                   <span style={{ fontSize: 9, color: '#666' }}>{otherUser.nickname}</span>
                 </div>
               )}
