@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { calcMatchRate } from '../utils/matchAlgo';
 import { getDistanceKm } from '../utils/geolocation';
+import { startChat } from '../utils/startChat';
 
 interface UserProfile {
   id: string;
@@ -274,7 +275,7 @@ export default function NearbyPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/chat/${user.id}`);
+                  if (currentUserProfile) startChat(currentUserProfile.id, user.id, navigate);
                 }}
                 style={{
                   background: 'linear-gradient(135deg, #8B0000, #5C0029)',

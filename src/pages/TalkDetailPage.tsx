@@ -5,6 +5,7 @@ import TendencyBadge from '../components/TendencyBadge';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getDistanceKm } from '../utils/geolocation';
+import { startChat } from '../utils/startChat';
 import type { Tendency } from '../data/mockData';
 
 interface TalkPostDetail {
@@ -279,7 +280,7 @@ export default function TalkDetailPage() {
             </button>
           ) : (
             <button
-              onClick={() => navigate(`/chat/${post.user_id}`)}
+              onClick={() => currentUser && startChat(currentUser.id, post.user_id, navigate)}
               style={{ background: 'linear-gradient(135deg, #8B0000, #5C0029)', color: '#fff', fontSize: 13, padding: '8px 16px', borderRadius: 8, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(139,0,0,0.3)', flexShrink: 0 }}
             >
               쪽지쓰기

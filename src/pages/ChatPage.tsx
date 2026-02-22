@@ -35,8 +35,6 @@ export default function ChatPage() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [kane, setKane] = useState<number>(0);
-  const [hasSentBefore, setHasSentBefore] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom on new messages
@@ -55,14 +53,6 @@ export default function ChatPage() {
 
       try {
         setLoading(true);
-
-        // Load current user's kane balance
-        const { data: myProfile } = await supabase
-          .from('profiles')
-          .select('kane')
-          .eq('id', currentUser.id)
-          .single();
-        setKane(myProfile?.kane || 0);
 
         // Load other user profile
         const { data: userData, error: userError } = await supabase
@@ -85,11 +75,6 @@ export default function ChatPage() {
 
         if (messagesError) throw messagesError;
         setMessages(messagesData || []);
-
-        // 이전에 내가 보낸 메시지 있으면 이후 무료
-        if (messagesData?.some(m => m.sender_id === currentUser.id)) {
-          setHasSentBefore(true);
-        }
 
         // Mark as read
         if (messagesData && messagesData.length > 0) {
@@ -133,31 +118,14 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim() || !currentUser || !userId || blocked) return;
 
-    // 첫 메시지일 때만 3케인 차감
-    if (!hasSentBefore) {
-      if (kane < 3) {
-        alert('케인이 부족합니다. 첫 쪽지 전송에 3 케인이 필요합니다.\n케인 충전 후 이용해주세요.');
-        return;
-      }
-    }
-
     setSending(true);
     try {
-      // 첫 메시지만 3케인 차감
-      if (!hasSentBefore) {
-        const newKane = kane - 3;
-        await supabase.from('profiles').update({ kane: newKane }).eq('id', currentUser.id);
-        await supabase.from('kane_transactions').insert([{ user_id: currentUser.id, amount: -3, reason: 'message_send' }]);
-        setKane(newKane);
-      }
-
       const { error } = await supabase.from('messages').insert([
         { sender_id: currentUser.id, recipient_id: userId, content: input },
       ]);
 
       if (error) throw error;
       setInput('');
-      setHasSentBefore(true); // 이후 무료
     } catch (err) {
       console.error('Failed to send message:', err);
       alert('메시지 전송 실패');
@@ -304,13 +272,10 @@ export default function ChatPage() {
           borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <div style={{ padding: '6px 16px 0', fontSize: 11, color: !hasSentBefore && kane < 3 ? '#FF6464' : '#888' }}>
-          {hasSentBefore ? `잔액: ${kane} 케인 · 이후 쪽지 무료` : `잔액: ${kane} 케인 · 첫 쪽지 3 케인`}
-        </div>
       <div
         style={{
           display: 'flex',
-          padding: '6px 12px 10px',
+          padding: '10px 12px',
           gap: 8,
         }}
       >

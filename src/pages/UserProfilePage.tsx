@@ -8,6 +8,7 @@ import Icon from '../components/Icon';
 import { calcMatchRate } from '../utils/matchAlgo';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { startChat } from '../utils/startChat';
 
 interface UserProfile {
   id: string;
@@ -241,7 +242,7 @@ export default function UserProfilePage() {
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           <button
-            onClick={() => navigate(`/chat/${userProfile.id}`)}
+            onClick={() => currentUser && startChat(currentUser.id, userProfile.id, navigate)}
             style={{
               flex: 1,
               padding: '14px 0',
