@@ -27,6 +27,17 @@ export default function MessagesPage() {
   const { user: currentUser } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kane, setKane] = useState(0);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    supabase
+      .from('profiles')
+      .select('kane')
+      .eq('id', currentUser.id)
+      .single()
+      .then(({ data }) => setKane(data?.kane || 0));
+  }, [currentUser]);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -127,7 +138,7 @@ export default function MessagesPage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
-      <Header />
+      <Header kane={kane} />
 
       <div>
         {loading ? (
