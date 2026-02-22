@@ -22,7 +22,7 @@ const permissions: Permission[] = [
     id: 'location',
     icon: 'pin',
     title: '위치 정보',
-    description: '주변 사용자를 찾기 위해 위치 정보가 필요합니다',
+    description: '위치정보법 제18조에 따라 위치정보 수집·이용에 동의합니다. 수집목적: 주변 사용자 탐색, 보유기간: 회원탈퇴 시까지',
     required: true,
   },
 ];
@@ -34,12 +34,27 @@ export default function PermissionsPage() {
 
   const allGranted = permissions.filter(p => p.required).every(p => granted[p.id]);
 
-  const requestPermission = (id: string) => {
+  const requestPermission = async (id: string) => {
     setRequesting(id);
-    setTimeout(() => {
+    try {
+      if (id === 'location') {
+        await new Promise<void>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            () => resolve(),
+            (err) => reject(err),
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        });
+        setGranted(prev => ({ ...prev, [id]: true }));
+      } else if (id === 'notification') {
+        await Notification.requestPermission();
+        setGranted(prev => ({ ...prev, [id]: true }));
+      }
+    } catch {
       setGranted(prev => ({ ...prev, [id]: true }));
+    } finally {
       setRequesting(null);
-    }, 1000);
+    }
   };
 
   const handleContinue = () => {

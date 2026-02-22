@@ -8,6 +8,8 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -63,13 +65,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  };
+
+  const deleteAccount = async () => {
+    if (!user) return;
+    await supabase.from('messages').delete().or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
+    await supabase.from('talk_posts').delete().eq('user_id', user.id);
+    await supabase.from('profiles').delete().eq('id', user.id);
+    try { await supabase.rpc('delete_user'); } catch { /* ignore */ }
+    await supabase.auth.signOut();
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, resetPassword, deleteAccount, signOut }}>
       {children}
     </AuthContext.Provider>
   );

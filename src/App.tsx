@@ -20,8 +20,10 @@ import MorePage from './pages/MorePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 import BlockListPage from './pages/BlockListPage';
 import UserProfilePage from './pages/UserProfilePage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms'];
 
 function App() {
   const location = useLocation();
@@ -96,6 +98,8 @@ function App() {
     return (
       <Routes>
         <Route path="/" element={<AuthPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
@@ -119,6 +123,8 @@ function App() {
           <Route path="/user/:userId" element={<UserProfilePage />} />
           <Route path="/talk/write" element={<TalkWritePage />} />
           <Route path="/talk/:postId" element={<TalkDetailPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (

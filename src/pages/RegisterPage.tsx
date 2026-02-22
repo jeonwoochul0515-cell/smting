@@ -30,6 +30,11 @@ export default function RegisterPage() {
   // Step 3
   const [topPlays, setTopPlays] = useState<string[]>([]);
 
+  // 동의 항목
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+
   const togglePlay = (id: string) => {
     setSelectedPlays(prev =>
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
@@ -47,7 +52,7 @@ export default function RegisterPage() {
   };
 
   const canNext = () => {
-    if (step === 0) return nickname.trim() && age && gender && tendency;
+    if (step === 0) return nickname.trim() && age && gender && tendency && agreeTerms && agreePrivacy;
     if (step === 1) return selectedPlays.length >= 3;
     if (step === 2) return topPlays.length === 3;
     return false;
@@ -76,6 +81,7 @@ export default function RegisterPage() {
           avatar: '#8B0000',
           top_plays: topPlays,
           all_plays: selectedPlays,
+          marketing_agreed: agreeMarketing,
         }]);
 
       if (error) throw error;
@@ -218,6 +224,39 @@ export default function RegisterPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* 약관 동의 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#C9A96E', marginBottom: 4 }}>약관 동의</div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={agreeTerms && agreePrivacy && agreeMarketing}
+                  onChange={(e) => {
+                    setAgreeTerms(e.target.checked);
+                    setAgreePrivacy(e.target.checked);
+                    setAgreeMarketing(e.target.checked);
+                  }}
+                  style={{ width: 18, height: 18, accentColor: '#C9A96E' }}
+                />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#F0F0F0' }}>전체 동의</span>
+              </label>
+              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#C9A96E' }} />
+                <span style={{ fontSize: 13, color: '#ccc', flex: 1 }}>[필수] 이용약관 동의</span>
+                <span onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} style={{ fontSize: 11, color: '#C9A96E', cursor: 'pointer', textDecoration: 'underline' }}>보기</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#C9A96E' }} />
+                <span style={{ fontSize: 13, color: '#ccc', flex: 1 }}>[필수] 개인정보처리방침 동의</span>
+                <span onClick={(e) => { e.preventDefault(); window.open('/privacy', '_blank'); }} style={{ fontSize: 11, color: '#C9A96E', cursor: 'pointer', textDecoration: 'underline' }}>보기</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#C9A96E' }} />
+                <span style={{ fontSize: 13, color: '#888' }}>[선택] 마케팅 정보 수신 동의</span>
+              </label>
             </div>
           </div>
         )}

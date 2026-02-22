@@ -27,14 +27,16 @@ const menuItems = [
   { label: '성향 설정', icon: 'settings', path: '/profile/edit' },
   { label: '차단 관리', icon: 'ban', path: '/block-list' },
   { label: '알림 설정', icon: 'bell', path: '' },
-  { label: '이용약관', icon: 'doc', path: '' },
+  { label: '이용약관', icon: 'doc', path: '/terms' },
+  { label: '개인정보처리방침', icon: 'shield', path: '/privacy' },
   { label: '고객센터', icon: 'help', path: '' },
   { label: '로그아웃', icon: 'logout', path: '', action: 'logout' },
+  { label: '계정 탈퇴', icon: 'trash', path: '', action: 'delete' },
 ];
 
 export default function MorePage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
   const [myProfile, setMyProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -138,6 +140,14 @@ export default function MorePage() {
             onClick={async () => {
               if (item.action === 'logout') {
                 await signOut();
+              } else if (item.action === 'delete') {
+                if (window.confirm('정말 탈퇴하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.')) {
+                  try {
+                    await deleteAccount();
+                  } catch (err: any) {
+                    alert('탈퇴 처리 중 오류가 발생했습니다: ' + err.message);
+                  }
+                }
               } else if (item.path) {
                 navigate(item.path);
               }
@@ -159,7 +169,7 @@ export default function MorePage() {
             <span style={{ width: 24, display: 'flex', justifyContent: 'center' }}>
               <Icon name={item.icon} size={18} color="#888" />
             </span>
-            <span>{item.label}</span>
+            <span style={{ color: item.action === 'delete' ? '#FF4444' : undefined }}>{item.label}</span>
             <span style={{ marginLeft: 'auto', color: '#444', fontSize: 16 }}>›</span>
           </div>
         ))}

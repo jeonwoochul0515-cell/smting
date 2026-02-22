@@ -23,7 +23,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const { count, error } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('receiver_id', user.id)
+      .eq('recipient_id', user.id)
       .is('read_at', null);
 
     if (!error && count !== null) {
@@ -49,7 +49,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `receiver_id=eq.${user.id}`
+          filter: `recipient_id=eq.${user.id}`
         },
         () => {
           // 메시지가 추가, 수정, 삭제될 때마다 카운트 다시 가져오기

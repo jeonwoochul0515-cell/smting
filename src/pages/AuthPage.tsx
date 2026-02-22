@@ -4,13 +4,16 @@ import { useAuth } from '../context/AuthContext';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { signUp, signIn, signInWithGoogle } = useAuth();
+  const { signUp, signIn, signInWithGoogle, resetPassword } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,6 +293,49 @@ export default function AuthPage() {
               {isSignUp ? '로그인' : '가입'}
             </button>
           </div>
+
+          {/* 비밀번호 재설정 */}
+          {!isSignUp && (
+            <div style={{ textAlign: 'center' }}>
+              {!showResetPassword ? (
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword(true)}
+                  style={{ fontSize: 12, color: '#666', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  비밀번호를 잊으셨나요?
+                </button>
+              ) : resetSent ? (
+                <p style={{ fontSize: 12, color: '#00C853', textAlign: 'center' }}>재설정 링크를 이메일로 전송했습니다</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="가입한 이메일 입력"
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#F0F0F0', fontSize: 13, outline: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!resetEmail) return;
+                      try {
+                        await resetPassword(resetEmail);
+                        setResetSent(true);
+                      } catch (err: any) {
+                        setError(err.message || '재설정 메일 전송 실패');
+                      }
+                    }}
+                    style={{ padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #8B0000, #5C0029)', border: 'none', cursor: 'pointer' }}
+                  >
+                    재설정 링크 전송
+                  </button>
+                  <button type="button" onClick={() => setShowResetPassword(false)} style={{ fontSize: 12, color: '#666', background: 'none', border: 'none', cursor: 'pointer' }}>취소</button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Help Text */}
           <div style={{
