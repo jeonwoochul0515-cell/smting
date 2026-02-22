@@ -6,7 +6,7 @@ import TendencyBadge from '../components/TendencyBadge';
 import TalkWriteModal from '../components/TalkWriteModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { getDistanceKm } from '../utils/geolocation';
+import { getDistanceKm, getCurrentPosition } from '../utils/geolocation';
 
 interface TalkPost {
   id: string;
@@ -75,6 +75,19 @@ export default function TalkPage() {
           .single();
         myLat = myProfile?.latitude ?? null;
         myLng = myProfile?.longitude ?? null;
+
+        // DB에 위치 없으면 브라우저 위치 사용
+        if (!myLat || !myLng) {
+          try {
+            const pos = await getCurrentPosition();
+            myLat = pos.latitude;
+            myLng = pos.longitude;
+            // 프로필에 위치 저장
+            await supabase.from('profiles').update({ latitude: myLat, longitude: myLng }).eq('id', currentUser.id);
+          } catch {
+            // 위치 권한 거부 시 무시
+          }
+        }
       }
 
       if (profilesError) throw profilesError;
