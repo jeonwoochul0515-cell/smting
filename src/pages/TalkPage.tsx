@@ -123,9 +123,9 @@ export default function TalkPage() {
 
   // Filter posts by distance based on tab
   const filteredPosts = (() => {
-    if (activeTab === '지역') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 50);
-    if (activeTab === '등네') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 20);
-    if (activeTab === '근처') return posts.filter(p => p.distance_km === undefined || p.distance_km <= 10);
+    if (activeTab === '지역') return posts.filter(p => p.distance_km !== undefined && p.distance_km <= 50);
+    if (activeTab === '등네') return posts.filter(p => p.distance_km !== undefined && p.distance_km <= 20);
+    if (activeTab === '근처') return posts.filter(p => p.distance_km !== undefined && p.distance_km <= 10);
     return posts; // 전체, 내토크
   })();
 
