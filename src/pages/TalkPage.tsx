@@ -31,6 +31,18 @@ export default function TalkPage() {
   const [posts, setPosts] = useState<TalkPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWriteModal, setShowWriteModal] = useState(false);
+  const [kane, setKane] = useState(0);
+
+  // Load kane balance
+  useEffect(() => {
+    if (!currentUser) return;
+    supabase
+      .from('profiles')
+      .select('kane')
+      .eq('id', currentUser.id)
+      .single()
+      .then(({ data }) => setKane(data?.kane || 0));
+  }, [currentUser]);
 
   // Load talk posts with useCallback for external access
   const loadPosts = useCallback(async () => {
@@ -161,6 +173,7 @@ export default function TalkPage() {
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header
+        kane={kane}
         right={
           <button
             onClick={() => setShowWriteModal(true)}
@@ -266,8 +279,8 @@ export default function TalkPage() {
           onClose={() => setShowWriteModal(false)}
           onSuccess={() => {
             setShowWriteModal(false);
-            // Reload posts
             loadPosts();
+            setKane(prev => prev + 10);
           }}
         />
       )}
