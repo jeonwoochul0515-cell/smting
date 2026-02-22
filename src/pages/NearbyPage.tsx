@@ -37,6 +37,7 @@ export default function NearbyPage() {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [showTalkModal, setShowTalkModal] = useState(false);
   const [kane, setKane] = useState(0);
+  const [sortByMatch, setSortByMatch] = useState(false);
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -144,12 +145,12 @@ export default function NearbyPage() {
   }));
 
   const sorted = filteredWithMatch.sort((a, b) => {
+    if (sortByMatch) return b.matchRate - a.matchRate;
     if (activeTab.includes('최근')) {
       const aTime = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
       const bTime = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
       return bTime - aTime;
     }
-    // 근처: 거리 오름차순 (거리 없으면 뒤로)
     const aDist = a.distance_km ?? 9999;
     const bDist = b.distance_km ?? 9999;
     return aDist - bDist;
@@ -167,6 +168,22 @@ export default function NearbyPage() {
     <div style={{ paddingBottom: 60 }}>
       <Header kane={kane} />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={setActiveTab} />
+
+      {/* 정렬 토글 */}
+      <div style={{ display: 'flex', gap: 8, padding: '8px 16px 0' }}>
+        <button
+          onClick={() => setSortByMatch(false)}
+          style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: !sortByMatch ? 'rgba(139,0,0,0.8)' : 'rgba(255,255,255,0.06)', color: !sortByMatch ? '#fff' : '#888' }}
+        >
+          {activeTab.includes('최근') ? '최근 접속순' : '거리순'}
+        </button>
+        <button
+          onClick={() => setSortByMatch(true)}
+          style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: sortByMatch ? 'rgba(139,0,0,0.8)' : 'rgba(255,255,255,0.06)', color: sortByMatch ? '#fff' : '#888' }}
+        >
+          궁합순
+        </button>
+      </div>
 
       <div>
         {sorted.length === 0 ? (

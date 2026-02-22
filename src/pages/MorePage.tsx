@@ -26,11 +26,12 @@ const menuItems = [
   { label: '프로필 수정', icon: 'edit', path: '/profile/edit' },
   { label: '성향 설정', icon: 'settings', path: '/profile/edit' },
   { label: '케인 충전', icon: 'star', path: '/kane/purchase' },
+  { label: '케인 내역', icon: 'doc', path: '/kane/history' },
   { label: '차단 관리', icon: 'ban', path: '/block-list' },
-  { label: '알림 설정', icon: 'bell', path: '' },
+  { label: '알림 설정', icon: 'bell', path: '/notifications' },
   { label: '이용약관', icon: 'doc', path: '/terms' },
   { label: '개인정보처리방침', icon: 'shield', path: '/privacy' },
-  { label: '고객센터', icon: 'help', path: '' },
+  { label: '고객센터', icon: 'help', path: '/support' },
   { label: '로그아웃', icon: 'logout', path: '', action: 'logout' },
   { label: '계정 탈퇴', icon: 'trash', path: '', action: 'delete' },
 ];
@@ -40,6 +41,7 @@ export default function MorePage() {
   const { user, signOut, deleteAccount } = useAuth();
   const [myProfile, setMyProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [kane, setKane] = useState(0);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -52,7 +54,10 @@ export default function MorePage() {
           .single();
 
         if (error && error.code !== 'PGRST116') throw error;
-        if (data) setMyProfile(data);
+        if (data) {
+          setMyProfile(data);
+          setKane((data as any).kane || 0);
+        }
       } catch (err) {
         console.error('Failed to load profile:', err);
       } finally {
@@ -78,7 +83,7 @@ export default function MorePage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
-      <Header />
+      <Header kane={kane} />
 
       {/* Profile Card */}
       {myProfile && (

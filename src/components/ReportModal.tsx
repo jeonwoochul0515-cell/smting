@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 interface ReportModalProps {
   nickname: string;
+  userId?: string;
   onClose: () => void;
   onBlock?: () => void;
   mode: 'report' | 'menu';
@@ -16,12 +19,22 @@ const reportReasons = [
   '기타',
 ];
 
-export default function ReportModal({ nickname, onClose, onBlock, mode }: ReportModalProps) {
+export default function ReportModal({ nickname, userId, onClose, onBlock, mode }: ReportModalProps) {
+  const { user } = useAuth();
   const [view, setView] = useState<'menu' | 'report' | 'done'>(mode === 'report' ? 'report' : 'menu');
   const [selectedReason, setSelectedReason] = useState('');
 
-  const handleReport = () => {
+  const handleReport = async () => {
     if (!selectedReason) return;
+    if (user && userId) {
+      try {
+        await supabase.from('reports').insert([{
+          reporter_id: user.id,
+          reported_id: userId,
+          reason: selectedReason,
+        }]);
+      } catch { /* ignore - still show done */ }
+    }
     setView('done');
     setTimeout(onClose, 1500);
   };

@@ -29,6 +29,7 @@ export default function TalkDetailPage() {
   const [post, setPost] = useState<TalkPostDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -262,24 +263,28 @@ export default function TalkDetailPage() {
             </div>
           </div>
 
-          {/* Message Button */}
-          <button
-            onClick={() => navigate(`/chat/${post.user_id}`)}
-            style={{
-              background: 'linear-gradient(135deg, #8B0000, #5C0029)',
-              color: '#fff',
-              fontSize: 13,
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
-              flexShrink: 0,
-            }}
-          >
-            쪽지쓰기
-          </button>
+          {/* 본인 토크: 삭제 버튼 / 타인: 쪽지 버튼 */}
+          {currentUser?.id === post.user_id ? (
+            <button
+              onClick={async () => {
+                if (!confirm('토크를 삭제할까요?')) return;
+                setDeleting(true);
+                await supabase.from('talk_posts').delete().eq('id', post.id);
+                navigate(-1);
+              }}
+              disabled={deleting}
+              style={{ background: 'rgba(255,68,68,0.12)', color: '#FF6B6B', fontSize: 13, padding: '8px 16px', borderRadius: 8, fontWeight: 600, border: '1px solid rgba(255,68,68,0.25)', cursor: deleting ? 'default' : 'pointer', flexShrink: 0 }}
+            >
+              {deleting ? '삭제 중...' : '삭제'}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(`/chat/${post.user_id}`)}
+              style={{ background: 'linear-gradient(135deg, #8B0000, #5C0029)', color: '#fff', fontSize: 13, padding: '8px 16px', borderRadius: 8, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(139,0,0,0.3)', flexShrink: 0 }}
+            >
+              쪽지쓰기
+            </button>
+          )}
         </div>
 
         {/* Post Title */}

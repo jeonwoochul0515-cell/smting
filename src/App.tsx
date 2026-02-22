@@ -23,8 +23,11 @@ import UserProfilePage from './pages/UserProfilePage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import KanePurchasePage from './pages/KanePurchasePage';
+import KaneHistoryPage from './pages/KaneHistoryPage';
+import NotificationSettingsPage from './pages/NotificationSettingsPage';
+import SupportPage from './pages/SupportPage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support'];
 
 function App() {
   const location = useLocation();
@@ -127,6 +130,9 @@ function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/kane/purchase" element={<KanePurchasePage />} />
+          <Route path="/kane/history" element={<KaneHistoryPage />} />
+          <Route path="/notifications" element={<NotificationSettingsPage />} />
+          <Route path="/support" element={<SupportPage />} />
           <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (
