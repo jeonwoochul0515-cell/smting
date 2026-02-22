@@ -35,6 +35,7 @@ export default function ChatPage() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [kane, setKane] = useState<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom on new messages
@@ -53,6 +54,14 @@ export default function ChatPage() {
 
       try {
         setLoading(true);
+
+        // Load current user's kane balance
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('kane')
+          .eq('id', currentUser.id)
+          .single();
+        setKane(myProfile?.kane || 0);
 
         // Load other user profile
         const { data: userData, error: userError } = await supabase
@@ -117,9 +126,26 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!input.trim() || !currentUser || !userId || blocked) return;
+    if (kane < 3) {
+      alert('케인이 부족합니다. 쪽지 전송에 3 케인이 필요합니다.\n케인 충전 후 이용해주세요.');
+      return;
+    }
 
     setSending(true);
     try {
+      // 3 케인 차감
+      const newKane = kane - 3;
+      await supabase
+        .from('profiles')
+        .update({ kane: newKane })
+        .eq('id', currentUser.id);
+
+      await supabase
+        .from('kane_transactions')
+        .insert([{ user_id: currentUser.id, amount: -3, reason: 'message_send' }]);
+
+      setKane(newKane);
+
       const { error } = await supabase.from('messages').insert([
         {
           sender_id: currentUser.id,
@@ -271,12 +297,19 @@ export default function ChatPage() {
 
       <div
         style={{
-          display: 'flex',
-          padding: '10px 12px',
-          gap: 8,
           backgroundColor: 'rgba(20,20,20,0.95)',
           backdropFilter: 'blur(10px)',
           borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div style={{ padding: '6px 16px 0', fontSize: 11, color: kane < 3 ? '#FF6464' : '#888' }}>
+          잔액: {kane} 케인 {kane < 3 ? '(부족)' : '(쪽지 1건 = 3 케인)'}
+        </div>
+      <div
+        style={{
+          display: 'flex',
+          padding: '6px 12px 10px',
+          gap: 8,
         }}
       >
         <input
@@ -322,6 +355,7 @@ export default function ChatPage() {
         >
           {sending ? '전송 중...' : '전송'}
         </button>
+      </div>
       </div>
 
       {showMenu && (

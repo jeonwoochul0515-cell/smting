@@ -5,10 +5,10 @@ interface HeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   right?: React.ReactNode;
-  cai?: number;
+  kane?: number;
 }
 
-export default function Header({ title = 'SMting', showBack, onBack, right, cai }: HeaderProps) {
+export default function Header({ title = 'SMting', showBack, onBack, right, kane }: HeaderProps) {
   const { unreadCount } = useUnreadCount();
 
   return (
@@ -50,14 +50,14 @@ export default function Header({ title = 'SMting', showBack, onBack, right, cai 
           }}>
             {title}
           </h1>
-          {cai !== undefined && (
+          {kane !== undefined && (
             <div style={{
               fontSize: 11,
               color: '#E8D5B0',
               marginTop: 2,
               fontWeight: 600,
             }}>
-              Cai: {cai}
+              {kane} 케인
             </div>
           )}
         </div>

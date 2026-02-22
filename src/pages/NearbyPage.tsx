@@ -36,7 +36,7 @@ export default function NearbyPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [showTalkModal, setShowTalkModal] = useState(false);
-  const [cai, setCai] = useState(0);
+  const [kane, setKane] = useState(0);
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -54,7 +54,7 @@ export default function NearbyPage() {
 
           if (myData) {
             setCurrentUserProfile(myData);
-            setCai(myData.cai || 0);
+            setKane(myData.kane || 0);
             myLat = myData.latitude ?? null;
             myLng = myData.longitude ?? null;
             const hasSeenTalkModal = localStorage.getItem(`talk_modal_${user.id}`);
@@ -165,7 +165,7 @@ export default function NearbyPage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
-      <Header cai={cai} />
+      <Header kane={kane} />
       <SubTabs tabs={subTabs} active={activeTab} onSelect={setActiveTab} />
 
       <div>
@@ -285,7 +285,7 @@ export default function NearbyPage() {
           onClose={() => setShowTalkModal(false)}
           onSuccess={() => {
             setShowTalkModal(false);
-            setCai(prev => prev + 30);
+            setKane((prev: number) => prev + 10);
           }}
         />
       )}

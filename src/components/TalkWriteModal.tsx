@@ -33,24 +33,37 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
 
       if (postError) throw postError;
 
-      // Cai +30 추가 (실패해도 토크는 이미 저장됨)
+      // 케인 +10 일일 보상 (하루 1회, 실패해도 토크는 이미 저장됨)
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('cai')
-          .eq('id', user.id)
-          .single();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-        await supabase
-          .from('profiles')
-          .update({ cai: (profile?.cai || 0) + 30 })
-          .eq('id', user.id);
+        const { data: todayReward } = await supabase
+          .from('kane_transactions')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('reason', 'talk_post')
+          .gte('created_at', todayStart.toISOString())
+          .limit(1);
 
-        await supabase
-          .from('cai_transactions')
-          .insert([{ user_id: user.id, amount: 30, reason: 'talk_post' }]);
+        if (!todayReward || todayReward.length === 0) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('kane')
+            .eq('id', user.id)
+            .single();
+
+          await supabase
+            .from('profiles')
+            .update({ kane: (profile?.kane || 0) + 10 })
+            .eq('id', user.id);
+
+          await supabase
+            .from('kane_transactions')
+            .insert([{ user_id: user.id, amount: 10, reason: 'talk_post' }]);
+        }
       } catch {
-        console.error('Cai update failed, but talk post saved');
+        console.error('Kane update failed, but talk post saved');
       }
 
       onSuccess();
@@ -94,7 +107,7 @@ export default function TalkWriteModal({ onClose, onSuccess }: TalkWriteModalPro
             새 토크 쓰기
           </h2>
           <p style={{ fontSize: 13, color: '#888' }}>
-            토크를 작성하면 30 Cai를 얻습니다!
+            토크 작성 시 하루 1회 10 케인을 무료로 받습니다!
           </p>
         </div>
 

@@ -25,6 +25,7 @@ interface UserProfile {
 const menuItems = [
   { label: '프로필 수정', icon: 'edit', path: '/profile/edit' },
   { label: '성향 설정', icon: 'settings', path: '/profile/edit' },
+  { label: '케인 충전', icon: 'star', path: '/kane/purchase' },
   { label: '차단 관리', icon: 'ban', path: '/block-list' },
   { label: '알림 설정', icon: 'bell', path: '' },
   { label: '이용약관', icon: 'doc', path: '/terms' },
