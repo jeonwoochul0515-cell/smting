@@ -8,6 +8,7 @@ interface Post {
   content: string;
   created_at: string;
   author_id: string;
+  category?: string;
 }
 
 interface Comment {
@@ -86,7 +87,7 @@ export default function BoardDetailPage() {
     if (!post || !user || post.author_id !== user.id) return;
     if (!confirm('게시글을 삭제할까요?')) return;
     await supabase.from('free_posts').delete().eq('id', post.id);
-    navigate(-1);
+    navigate(`/board/${post.category || 'fs'}`, { replace: true });
   };
 
   const handleDeleteComment = async (commentId: string, authorId: string) => {
