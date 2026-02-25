@@ -76,6 +76,15 @@ export default function ChatPage() {
         if (messagesError) throw messagesError;
         setMessages(messagesData || []);
 
+        // 차단 여부 DB에서 확인
+        const { data: blockData } = await supabase
+          .from('block_list')
+          .select('id')
+          .eq('blocker_id', currentUser.id)
+          .eq('blocked_id', userId)
+          .maybeSingle();
+        setBlocked(!!blockData);
+
         // Mark as read
         if (messagesData && messagesData.length > 0) {
           await supabase
@@ -93,25 +102,29 @@ export default function ChatPage() {
 
     loadConversation();
 
-    // Subscribe to new messages
-    const subscription = supabase
-      .channel(`chat:${currentUser?.id}:${userId}`)
+    // Subscribe to new messages (recipient_id 기준으로 필터 — Supabase Realtime은 단일 컬럼 필터만 지원)
+    // 내가 받는 메시지 구독
+    const subReceive = supabase
+      .channel(`chat_recv:${currentUser?.id}:${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `or(and(sender_id=eq.${currentUser?.id},recipient_id=eq.${userId}),and(sender_id=eq.${userId},recipient_id=eq.${currentUser?.id}))`,
+          filter: `recipient_id=eq.${currentUser?.id}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const msg = payload.new as Message & { sender_id: string };
+          if (msg.sender_id === userId) {
+            setMessages((prev) => [...prev, msg]);
+          }
         }
       )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      subReceive.unsubscribe();
     };
   }, [userId, currentUser]);
 
@@ -119,15 +132,19 @@ export default function ChatPage() {
     if (!input.trim() || !currentUser || !userId || blocked) return;
 
     setSending(true);
+    const content = input;
+    setInput('');
     try {
-      const { error } = await supabase.from('messages').insert([
-        { sender_id: currentUser.id, recipient_id: userId, content: input },
-      ]);
+      const { data, error } = await supabase.from('messages').insert([
+        { sender_id: currentUser.id, recipient_id: userId, content },
+      ]).select().single();
 
       if (error) throw error;
-      setInput('');
+      // 내가 보낸 메시지는 실시간 구독에 포함되지 않으므로 직접 추가
+      if (data) setMessages((prev) => [...prev, data as Message]);
     } catch (err) {
       console.error('Failed to send message:', err);
+      setInput(content); // 실패 시 입력 복원
       alert('메시지 전송 실패');
     } finally {
       setSending(false);
@@ -282,7 +299,7 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSend();

@@ -8,20 +8,18 @@
 -- ============================================
 
 -- ============================================
--- 1. cai_transactions 테이블 RLS (개인정보보호법)
+-- 1. kane_transactions 테이블 RLS (개인정보보호법)
 -- ============================================
-ALTER TABLE IF EXISTS cai_transactions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "cai_transactions_select_policy" ON cai_transactions;
-DROP POLICY IF EXISTS "cai_transactions_insert_policy" ON cai_transactions;
-
-CREATE POLICY "cai_transactions_select_policy"
-ON cai_transactions FOR SELECT
-USING (auth.uid() = user_id);
-
-CREATE POLICY "cai_transactions_insert_policy"
-ON cai_transactions FOR INSERT
-WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'kane_transactions') THEN
+    EXECUTE 'ALTER TABLE kane_transactions ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS "kane_transactions_select_policy" ON kane_transactions';
+    EXECUTE 'DROP POLICY IF EXISTS "kane_transactions_insert_policy" ON kane_transactions';
+    EXECUTE 'CREATE POLICY "kane_transactions_select_policy" ON kane_transactions FOR SELECT USING (auth.uid() = user_id)';
+    EXECUTE 'CREATE POLICY "kane_transactions_insert_policy" ON kane_transactions FOR INSERT WITH CHECK (auth.uid() = user_id)';
+  END IF;
+END $$;
 
 -- ============================================
 -- 2. block_list 테이블 생성
@@ -100,7 +98,7 @@ BEGIN
   DELETE FROM reports
   WHERE reporter_id = auth.uid();
 
-  DELETE FROM cai_transactions
+  DELETE FROM kane_transactions
   WHERE user_id = auth.uid();
 
   DELETE FROM profiles

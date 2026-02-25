@@ -5,7 +5,7 @@ import { useUnreadCount } from '../context/NotificationContext';
 const tabs = [
   { path: '/talk', label: '토크', icon: 'chat' },
   { path: '/nearby', label: '주변', icon: 'person' },
-  { path: '/theme', label: '테마', icon: 'hash' },
+  { path: '/theme', label: '자유', icon: 'hash' },
   { path: '/messages', label: '쪽지', icon: 'mail' },
   { path: '/more', label: '더보기', icon: 'more' },
 ];

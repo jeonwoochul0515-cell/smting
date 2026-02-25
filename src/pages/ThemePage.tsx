@@ -1,75 +1,224 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
-import Icon from '../components/Icon';
 
-const themes = [
-  { id: 1, name: '본디지', icon: 'link', count: 128, color: '#8B0000' },
-  { id: 2, name: '로프', icon: 'rope', count: 95, color: '#5C0029' },
-  { id: 3, name: '롤플레이', icon: 'theater', count: 203, color: '#4A0080' },
-  { id: 4, name: '페티쉬', icon: 'shoe', count: 167, color: '#2D033B' },
-  { id: 5, name: '디시플린', icon: 'ruler', count: 84, color: '#3D0C11' },
-  { id: 6, name: '센슈얼', icon: 'rose', count: 312, color: '#6B0848' },
-  { id: 7, name: '펨돔', icon: 'crown', count: 76, color: '#005C5C' },
-  { id: 8, name: '스위치', icon: 'swap', count: 145, color: '#1A3A4A' },
-  { id: 9, name: '초보환영', icon: 'sprout', count: 256, color: '#2A4A2A' },
-];
+interface Post {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  comment_count?: number;
+}
 
 export default function ThemePage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [writing, setWriting] = useState(false);
+  const [input, setInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadPosts = async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from('free_posts')
+        .select('*, free_comments(count)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      const mapped = (data || []).map((p: any) => ({
+        ...p,
+        comment_count: p.free_comments?.[0]?.count ?? 0,
+      }));
+      setPosts(mapped);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+
+    const sub = supabase
+      .channel('free_posts_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'free_posts' }, () => {
+        loadPosts();
+      })
+      .subscribe();
+
+    return () => { sub.unsubscribe(); };
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!input.trim() || !user || submitting) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('free_posts')
+        .insert([{ author_id: user.id, content: input.trim() }]);
+      if (error) throw error;
+      setInput('');
+      setWriting(false);
+    } catch {
+      alert('글 등록에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getTimeAgo = (date: string) => {
+    const diff = Date.now() - new Date(date.endsWith('Z') ? date : date + 'Z').getTime();
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+    if (m < 1) return '방금';
+    if (m < 60) return `${m}분 전`;
+    if (h < 24) return `${h}시간 전`;
+    return `${d}일 전`;
+  };
+
   return (
     <div style={{ paddingBottom: 60 }}>
       <Header />
-      <div style={{ padding: 16 }}>
+
+      {/* 상단 타이틀 + 글쓰기 버튼 */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 16px 8px',
+      }}>
+        <div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#F0F0F0' }}>자유게시판</div>
+          <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>익명으로 자유롭게 이야기하세요</div>
+        </div>
+        <button
+          onClick={() => setWriting(true)}
+          style={{
+            background: 'linear-gradient(135deg, #8B0000, #5C0029)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 20,
+            padding: '8px 16px',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(139,0,0,0.35)',
+          }}
+        >
+          + 글쓰기
+        </button>
+      </div>
+
+      {/* 글쓰기 폼 */}
+      {writing && (
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
+          margin: '0 16px 16px',
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(201,169,110,0.2)',
+          borderRadius: 14,
+          padding: 16,
         }}>
-          {themes.map((theme, i) => (
+          <textarea
+            autoFocus
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="하고 싶은 말을 자유롭게 써보세요 (익명)"
+            maxLength={1000}
+            rows={4}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              color: '#F0F0F0',
+              fontSize: 14,
+              lineHeight: 1.6,
+              resize: 'none',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+            <span style={{ fontSize: 11, color: '#555' }}>{input.length}/1000</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { setWriting(false); setInput(''); }}
+                style={{ background: 'none', border: '1px solid #333', color: '#888', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!input.trim() || submitting}
+                style={{
+                  background: !input.trim() || submitting ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #8B0000, #5C0029)',
+                  color: !input.trim() || submitting ? '#555' : '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 16px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: !input.trim() || submitting ? 'default' : 'pointer',
+                }}
+              >
+                {submitting ? '등록 중...' : '등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 게시글 목록 */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>불러오는 중...</div>
+      ) : posts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#555' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>💬</div>
+          <div>첫 글을 남겨보세요</div>
+        </div>
+      ) : (
+        <div>
+          {posts.map((post, i) => (
             <div
-              key={theme.id}
+              key={post.id}
+              onClick={() => navigate(`/board/${post.id}`)}
               style={{
-                backgroundColor: 'rgba(26, 26, 26, 0.8)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: 14,
-                padding: '22px 12px',
-                textAlign: 'center',
+                padding: '16px',
+                borderBottom: '1px solid rgba(255,255,255,0.04)',
                 cursor: 'pointer',
-                border: '1px solid rgba(255,255,255,0.06)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                animation: `fadeIn 0.4s ease ${i * 0.06}s both`,
-                transition: 'transform 0.2s, box-shadow 0.2s',
+                animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                transition: 'background-color 0.15s',
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = `0 6px 20px rgba(0,0,0,0.4), 0 0 15px ${theme.color}33`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-              }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
-              <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'center' }}>
-                <Icon name={theme.icon} size={32} color={theme.color} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: '#C9A96E', fontWeight: 600 }}>익명</span>
+                <span style={{ fontSize: 11, color: '#555' }}>{getTimeAgo(post.created_at)}</span>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#eee' }}>{theme.name}</div>
-              <div style={{ fontSize: 11, color: '#C9A96E' }}>{theme.count}명 참여중</div>
-              <div style={{
-                marginTop: 10,
-                height: 3,
-                borderRadius: 2,
-                backgroundColor: 'rgba(255,255,255,0.06)',
+              <p style={{
+                fontSize: 14,
+                color: '#ddd',
+                lineHeight: 1.6,
+                margin: 0,
                 overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
               }}>
-                <div style={{
-                  width: `${Math.min(theme.count / 3, 100)}%`,
-                  height: '100%',
-                  background: `linear-gradient(90deg, ${theme.color}, ${theme.color}88)`,
-                  borderRadius: 2,
-                }} />
-              </div>
+                {post.content}
+              </p>
+              {(post.comment_count ?? 0) > 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                  💬 댓글 {post.comment_count}
+                </div>
+              )}
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

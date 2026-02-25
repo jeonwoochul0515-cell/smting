@@ -26,6 +26,7 @@ import KanePurchasePage from './pages/KanePurchasePage';
 import KaneHistoryPage from './pages/KaneHistoryPage';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import SupportPage from './pages/SupportPage';
+import BoardDetailPage from './pages/BoardDetailPage';
 
 const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support'];
 
@@ -113,7 +114,8 @@ function App() {
   const isFullScreen = fullScreenPaths.includes(location.pathname)
     || location.pathname.startsWith('/chat/')
     || location.pathname.startsWith('/user/')
-    || location.pathname.startsWith('/talk/');
+    || location.pathname.startsWith('/talk/')
+    || location.pathname.startsWith('/board/');
 
   return (
     <div>
@@ -133,6 +135,7 @@ function App() {
           <Route path="/kane/history" element={<KaneHistoryPage />} />
           <Route path="/notifications" element={<NotificationSettingsPage />} />
           <Route path="/support" element={<SupportPage />} />
+          <Route path="/board/:postId" element={<BoardDetailPage />} />
           <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (

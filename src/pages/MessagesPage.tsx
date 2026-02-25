@@ -12,6 +12,7 @@ interface ConversationUser {
   age: number;
   tendency: string;
   avatar: string;
+  avatar_url?: string | null;
 }
 
 interface Conversation {
@@ -55,36 +56,43 @@ export default function MessagesPage() {
 
         if (messagesError) throw messagesError;
 
-        // Group by conversation
-        const conversationMap = new Map<string, Conversation>();
-
-        if (messagesData && messagesData.length > 0) {
+        // Group by conversation (최신 메시지만 보존)
+        const conversationMap = new Map<string, { msg: typeof messagesData[0]; otherUserId: string }>();
+        if (messagesData) {
           for (const msg of messagesData) {
             const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
-
             if (!conversationMap.has(otherUserId)) {
-              // Fetch user profile
-              const { data: userData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', otherUserId)
-                .single();
-
-              if (userData) {
-                conversationMap.set(otherUserId, {
-                  userId: otherUserId,
-                  user: userData,
-                  lastMessage: msg.content,
-                  lastMessageTime: msg.created_at,
-                  unread: msg.recipient_id === currentUser.id && !msg.read_at,
-                });
-              }
+              conversationMap.set(otherUserId, { msg, otherUserId });
             }
           }
         }
 
-        // Convert to array and sort by last message time
-        const conversationList = Array.from(conversationMap.values()).sort(
+        // 프로필을 한 번의 쿼리로 일괄 fetch (N+1 방지)
+        const otherUserIds = Array.from(conversationMap.keys());
+        const profileMap = new Map<string, ConversationUser>();
+        if (otherUserIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, nickname, age, tendency, avatar, avatar_url')
+            .in('id', otherUserIds);
+          profiles?.forEach((p) => profileMap.set(p.id, p));
+        }
+
+        const conversationList: Conversation[] = [];
+        conversationMap.forEach(({ msg, otherUserId }) => {
+          const user = profileMap.get(otherUserId);
+          if (user) {
+            conversationList.push({
+              userId: otherUserId,
+              user,
+              lastMessage: msg.content,
+              lastMessageTime: msg.created_at,
+              unread: msg.recipient_id === currentUser.id && !msg.read_at,
+            });
+          }
+        });
+
+        conversationList.sort(
           (a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
         );
 
@@ -98,16 +106,16 @@ export default function MessagesPage() {
 
     loadConversations();
 
-    // Subscribe to new messages
+    // 내가 받는 새 메시지 구독 (단일 컬럼 필터만 지원)
     const subscription = supabase
       .channel(`messages:${currentUser?.id}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `or(sender_id=eq.${currentUser?.id},recipient_id=eq.${currentUser?.id})`,
+          filter: `recipient_id=eq.${currentUser?.id}`,
         },
         () => {
           loadConversations();
@@ -170,7 +178,7 @@ export default function MessagesPage() {
                 (e.currentTarget.style.backgroundColor = conv.unread ? 'rgba(139,0,0,0.04)' : 'transparent')
               }
             >
-              <Avatar color={conv.user.avatar} nickname={conv.user.nickname} size={50} />
+              <Avatar color={conv.user.avatar} nickname={conv.user.nickname} size={50} imageUrl={conv.user.avatar_url} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <TendencyBadge tendency={conv.user.tendency as any} size="sm" />
