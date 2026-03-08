@@ -20,6 +20,24 @@ const boards = [
     color: '#1A3A5C',
     emoji: '👑',
   },
+  {
+    id: 'ms',
+    label: 'MS',
+    name: '남성 서브미시브',
+    desc: '리드를 따르고 복종하는 역할을 즐기는 남성',
+    gradient: 'linear-gradient(135deg, #1A4A1A, #0D2D0D)',
+    color: '#1A4A1A',
+    emoji: '⛓️',
+  },
+  {
+    id: 'md',
+    label: 'MD',
+    name: '남성 도미넌트',
+    desc: '주도권을 갖고 이끄는 역할을 즐기는 남성',
+    gradient: 'linear-gradient(135deg, #2A1A5C, #150D33)',
+    color: '#2A1A5C',
+    emoji: '🔱',
+  },
 ];
 
 export default function ThemePage() {

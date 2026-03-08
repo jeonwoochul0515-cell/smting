@@ -85,6 +85,28 @@ export default function RegisterPage() {
         }]);
 
       if (error) throw error;
+
+      // 추천인 보상: 가입 완료 후 추천인에게 케인 +50
+      const ref = localStorage.getItem('smting_ref');
+      if (ref && ref !== user.id) {
+        const { data: refProfile } = await supabase
+          .from('profiles')
+          .select('kane')
+          .eq('id', ref)
+          .single();
+        if (refProfile) {
+          const newKane = (refProfile.kane || 0) + 50;
+          await supabase.from('profiles').update({ kane: newKane }).eq('id', ref);
+          await supabase.from('kane_transactions').insert([{
+            user_id: ref,
+            amount: 50,
+            reason: 'referral',
+            created_at: new Date().toISOString(),
+          }]);
+          localStorage.removeItem('smting_ref');
+        }
+      }
+
       // Force page reload to re-check profile in App
       window.location.href = '/talk';
     } catch (err: any) {

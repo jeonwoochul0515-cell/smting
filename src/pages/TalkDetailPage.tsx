@@ -31,6 +31,12 @@ export default function TalkDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -103,6 +109,16 @@ export default function TalkDetailPage() {
         };
 
         setPost(postDetail);
+
+        // 좋아요 정보 로드
+        if (currentUser) {
+          const [{ count }, { data: myLike }] = await Promise.all([
+            supabase.from('talk_likes').select('*', { count: 'exact', head: true }).eq('post_id', postData.id),
+            supabase.from('talk_likes').select('id').eq('post_id', postData.id).eq('user_id', currentUser.id).maybeSingle(),
+          ]);
+          setLikeCount(count || 0);
+          setIsLiked(!!myLike);
+        }
       } catch (err) {
         console.error('Failed to load post:', err);
         setError('게시글을 불러오는데 실패했습니다');
@@ -113,6 +129,46 @@ export default function TalkDetailPage() {
 
     loadPost();
   }, [postId, currentUser?.id]);
+
+  const handleLike = async () => {
+    if (!currentUser || !post || likeLoading) return;
+    setLikeLoading(true);
+    try {
+      if (isLiked) {
+        await supabase.from('talk_likes').delete().eq('post_id', post.id).eq('user_id', currentUser.id);
+        setIsLiked(false);
+        setLikeCount(prev => Math.max(0, prev - 1));
+      } else {
+        await supabase.from('talk_likes').insert([{ post_id: post.id, user_id: currentUser.id }]);
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error('Like failed:', err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!post || !editContent.trim() || saving) return;
+    setSaving(true);
+    try {
+      const newContent = editContent.trim();
+      const newTitle = newContent.substring(0, 100);
+      const { error } = await supabase
+        .from('talk_posts')
+        .update({ content: newContent, title: newTitle })
+        .eq('id', post.id);
+      if (error) throw error;
+      setPost(prev => prev ? { ...prev, content: newContent, title: newTitle } : prev);
+      setIsEditing(false);
+    } catch {
+      alert('수정에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getTimeAgo = (date: string): string => {
     const now = new Date();
@@ -264,20 +320,28 @@ export default function TalkDetailPage() {
             </div>
           </div>
 
-          {/* 본인 토크: 삭제 버튼 / 타인: 쪽지 버튼 */}
+          {/* 본인 토크: 수정/삭제 버튼 / 타인: 쪽지 버튼 */}
           {currentUser?.id === post.user_id ? (
-            <button
-              onClick={async () => {
-                if (!confirm('토크를 삭제할까요?')) return;
-                setDeleting(true);
-                await supabase.from('talk_posts').delete().eq('id', post.id);
-                navigate(-1);
-              }}
-              disabled={deleting}
-              style={{ background: 'rgba(255,68,68,0.12)', color: '#FF6B6B', fontSize: 13, padding: '8px 16px', borderRadius: 8, fontWeight: 600, border: '1px solid rgba(255,68,68,0.25)', cursor: deleting ? 'default' : 'pointer', flexShrink: 0 }}
-            >
-              {deleting ? '삭제 중...' : '삭제'}
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={() => { setIsEditing(true); setEditContent(post.content); }}
+                style={{ background: 'rgba(255,255,255,0.08)', color: '#ccc', fontSize: 13, padding: '8px 14px', borderRadius: 8, fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+              >
+                수정
+              </button>
+              <button
+                onClick={async () => {
+                  if (!confirm('토크를 삭제할까요?')) return;
+                  setDeleting(true);
+                  await supabase.from('talk_posts').delete().eq('id', post.id);
+                  navigate(-1);
+                }}
+                disabled={deleting}
+                style={{ background: 'rgba(255,68,68,0.12)', color: '#FF6B6B', fontSize: 13, padding: '8px 14px', borderRadius: 8, fontWeight: 600, border: '1px solid rgba(255,68,68,0.25)', cursor: deleting ? 'default' : 'pointer' }}
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => currentUser && startChat(currentUser.id, post.user_id, navigate)}
@@ -320,18 +384,72 @@ export default function TalkDetailPage() {
         </div>
 
         {/* Post Content */}
-        <div
-          style={{
-            fontSize: 15,
-            lineHeight: 1.7,
-            color: '#ddd',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            minHeight: 200,
-          }}
-        >
-          {post.content}
-        </div>
+        {isEditing ? (
+          <div>
+            <textarea
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              maxLength={2000}
+              rows={8}
+              style={{
+                width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(139,0,0,0.4)',
+                borderRadius: 10, color: '#F0F0F0', fontSize: 15, lineHeight: 1.7,
+                padding: '12px', resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{ background: 'none', border: '1px solid #333', color: '#888', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}
+              >취소</button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={!editContent.trim() || saving}
+                style={{
+                  background: !editContent.trim() || saving ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #8B0000, #5C0029)',
+                  color: !editContent.trim() || saving ? '#555' : '#fff',
+                  border: 'none', borderRadius: 8, padding: '8px 20px', fontSize: 13, fontWeight: 600,
+                  cursor: !editContent.trim() || saving ? 'default' : 'pointer',
+                }}
+              >{saving ? '저장 중...' : '저장'}</button>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              fontSize: 15,
+              lineHeight: 1.7,
+              color: '#ddd',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              minHeight: 200,
+            }}
+          >
+            {post.content}
+          </div>
+        )}
+
+        {/* 좋아요 버튼 (타인 게시글만) */}
+        {currentUser?.id !== post.user_id && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: isLiked ? 'rgba(139,0,0,0.15)' : 'rgba(255,255,255,0.04)',
+                border: isLiked ? '1px solid rgba(139,0,0,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: isLiked ? '#FF6B6B' : '#888',
+                borderRadius: 20, padding: '10px 24px', fontSize: 14, fontWeight: 600,
+                cursor: likeLoading ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>{isLiked ? '❤️' : '🤍'}</span>
+              <span>{likeCount}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

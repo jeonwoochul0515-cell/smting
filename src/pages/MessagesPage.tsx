@@ -69,17 +69,29 @@ export default function MessagesPage() {
 
         // 프로필을 한 번의 쿼리로 일괄 fetch (N+1 방지)
         const otherUserIds = Array.from(conversationMap.keys());
+
+        // 차단한 사용자 목록 조회
+        const { data: blockData } = await supabase
+          .from('block_list')
+          .select('blocked_id')
+          .eq('blocker_id', currentUser.id);
+        const blockedIds = new Set((blockData || []).map((b: any) => b.blocked_id));
+
+        // otherUserIds에서 차단된 사용자 제외
+        const filteredUserIds = otherUserIds.filter(id => !blockedIds.has(id));
+
         const profileMap = new Map<string, ConversationUser>();
-        if (otherUserIds.length > 0) {
+        if (filteredUserIds.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
             .select('id, nickname, age, tendency, avatar, avatar_url')
-            .in('id', otherUserIds);
+            .in('id', filteredUserIds);
           profiles?.forEach((p) => profileMap.set(p.id, p));
         }
 
         const conversationList: Conversation[] = [];
         conversationMap.forEach(({ msg, otherUserId }) => {
+          if (blockedIds.has(otherUserId)) return; // 차단된 사용자 스킵
           const user = profileMap.get(otherUserId);
           if (user) {
             conversationList.push({

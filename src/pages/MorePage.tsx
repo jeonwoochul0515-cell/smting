@@ -25,6 +25,8 @@ interface UserProfile {
 const menuItems = [
   { label: '프로필 수정', icon: 'edit', path: '/profile/edit' },
   { label: '성향 설정', icon: 'settings', path: '/profile/edit' },
+  { label: '나를 본 사람', icon: 'eye', path: '/profile-views' },
+  { label: '친구 초대', icon: 'share', path: '', action: 'invite' },
   { label: '케인 충전', icon: 'star', path: '/kane/purchase' },
   { label: '케인 내역', icon: 'doc', path: '/kane/history' },
   { label: '차단 관리', icon: 'ban', path: '/block-list' },
@@ -144,7 +146,14 @@ export default function MorePage() {
           <div
             key={item.label}
             onClick={async () => {
-              if (item.action === 'logout') {
+              if (item.action === 'invite') {
+                const link = `${window.location.origin}/?ref=${user?.id}`;
+                if (navigator.share) {
+                  navigator.share({ title: 'SMting', text: '익명 성향 커뮤니티 SMting에서 만나요', url: link }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(link).then(() => alert('초대 링크가 복사되었습니다'));
+                }
+              } else if (item.action === 'logout') {
                 await signOut();
               } else if (item.action === 'delete') {
                 if (window.confirm('정말 탈퇴하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.')) {

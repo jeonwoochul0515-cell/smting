@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
 const BOARD_INFO = {
-  fs: { label: 'FS', name: '여성 서브미시브', emoji: '🎀', color: '#8B0000', gradient: 'linear-gradient(135deg, #8B0000, #5C0029)' },
-  fd: { label: 'FD', name: '여성 도미넌트', emoji: '👑', color: '#1A3A5C', gradient: 'linear-gradient(135deg, #1A3A5C, #0D1F33)' },
+  fs: { label: 'FS', name: '여성 서브미시브', emoji: '🎀', color: '#8B0000', gradient: 'linear-gradient(135deg, #8B0000, #5C0029)', textColor: '#C9A96E' },
+  fd: { label: 'FD', name: '여성 도미넌트', emoji: '👑', color: '#1A3A5C', gradient: 'linear-gradient(135deg, #1A3A5C, #0D1F33)', textColor: '#6A9FD8' },
+  ms: { label: 'MS', name: '남성 서브미시브', emoji: '⛓️', color: '#1A4A1A', gradient: 'linear-gradient(135deg, #1A4A1A, #0D2D0D)', textColor: '#6ABF6A' },
+  md: { label: 'MD', name: '남성 도미넌트', emoji: '🔱', color: '#2A1A5C', gradient: 'linear-gradient(135deg, #2A1A5C, #150D33)', textColor: '#9A7FD8' },
 };
 
 interface Post {
@@ -26,7 +28,7 @@ export default function BoardListPage() {
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const board = BOARD_INFO[category as 'fs' | 'fd'];
+  const board = BOARD_INFO[category as 'fs' | 'fd' | 'ms' | 'md'];
 
   const loadPosts = async () => {
     if (!category) return;
@@ -197,7 +199,7 @@ export default function BoardListPage() {
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, color: board.color === '#8B0000' ? '#C9A96E' : '#6A9FD8', fontWeight: 600 }}>익명</span>
+                <span style={{ fontSize: 12, color: board.textColor, fontWeight: 600 }}>익명</span>
                 <span style={{ fontSize: 11, color: '#555' }}>{getTimeAgo(post.created_at)}</span>
               </div>
               <p style={{

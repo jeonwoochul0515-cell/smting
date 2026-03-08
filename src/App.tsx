@@ -7,6 +7,7 @@ import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 import LoadingScreen from './components/LoadingScreen';
 import AuthPage from './pages/AuthPage';
+import LandingPage from './pages/LandingPage';
 import PermissionsPage from './pages/PermissionsPage';
 import RegisterPage from './pages/RegisterPage';
 import TalkPage from './pages/TalkPage';
@@ -28,8 +29,9 @@ import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import SupportPage from './pages/SupportPage';
 import BoardDetailPage from './pages/BoardDetailPage';
 import BoardListPage from './pages/BoardListPage';
+import ProfileViewsPage from './pages/ProfileViewsPage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support'];
+const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support', '/profile-views'];
 
 function App() {
   const location = useLocation();
@@ -83,10 +85,37 @@ function App() {
       });
   }, [user, hasProfile]);
 
-  // 프로필 없으면 /register로 이동
+  // 주기적 last_active_at 갱신 (5분마다 + 탭 포커스 시)
   useEffect(() => {
-    if (user && hasProfile === false && location.pathname !== '/register') {
-      navigate('/register', { replace: true });
+    if (!user || hasProfile !== true) return;
+
+    const updateActiveTime = () => {
+      supabase
+        .from('profiles')
+        .update({ last_active_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .then(() => {});
+    };
+
+    const interval = setInterval(updateActiveTime, 5 * 60 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateActiveTime();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user?.id, hasProfile]);
+
+  // 프로필 없으면 /permissions → /register로 이동
+  useEffect(() => {
+    if (user && hasProfile === false && location.pathname !== '/register' && location.pathname !== '/permissions') {
+      navigate('/permissions', { replace: true });
     }
   }, [user, hasProfile, location.pathname, navigate]);
 
@@ -103,7 +132,8 @@ function App() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<AuthPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -138,6 +168,7 @@ function App() {
           <Route path="/support" element={<SupportPage />} />
           <Route path="/board/:category" element={<BoardListPage />} />
           <Route path="/board/post/:postId" element={<BoardDetailPage />} />
+          <Route path="/profile-views" element={<ProfileViewsPage />} />
           <Route path="*" element={<Navigate to="/talk" replace />} />
         </Routes>
       ) : (

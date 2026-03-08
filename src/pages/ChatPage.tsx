@@ -76,14 +76,12 @@ export default function ChatPage() {
         if (messagesError) throw messagesError;
         setMessages(messagesData || []);
 
-        // 차단 여부 DB에서 확인
-        const { data: blockData } = await supabase
-          .from('block_list')
-          .select('id')
-          .eq('blocker_id', currentUser.id)
-          .eq('blocked_id', userId)
-          .maybeSingle();
-        setBlocked(!!blockData);
+        // 차단 여부 DB에서 확인 (내가 차단했거나 상대가 나를 차단)
+        const [{ data: blockData }, { data: blockedByData }] = await Promise.all([
+          supabase.from('block_list').select('id').eq('blocker_id', currentUser.id).eq('blocked_id', userId).maybeSingle(),
+          supabase.from('block_list').select('id').eq('blocker_id', userId).eq('blocked_id', currentUser.id).maybeSingle(),
+        ]);
+        setBlocked(!!blockData || !!blockedByData);
 
         // Mark as read
         if (messagesData && messagesData.length > 0) {

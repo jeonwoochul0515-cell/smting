@@ -28,6 +28,12 @@ export default function BoardDetailPage() {
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [editingPost, setEditingPost] = useState(false);
+  const [editPostContent, setEditPostContent] = useState('');
+  const [savingPost, setSavingPost] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentContent, setEditCommentContent] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
 
   const loadData = async () => {
     if (!postId) return;
@@ -96,6 +102,42 @@ export default function BoardDetailPage() {
     setComments(prev => prev.filter(c => c.id !== commentId));
   };
 
+  const handleEditPost = async () => {
+    if (!post || !editPostContent.trim() || savingPost) return;
+    setSavingPost(true);
+    try {
+      const { error } = await supabase
+        .from('free_posts')
+        .update({ content: editPostContent.trim() })
+        .eq('id', post.id);
+      if (error) throw error;
+      setPost({ ...post, content: editPostContent.trim() });
+      setEditingPost(false);
+    } catch {
+      alert('수정에 실패했습니다.');
+    } finally {
+      setSavingPost(false);
+    }
+  };
+
+  const handleEditComment = async (commentId: string) => {
+    if (!editCommentContent.trim() || savingComment) return;
+    setSavingComment(true);
+    try {
+      const { error } = await supabase
+        .from('free_comments')
+        .update({ content: editCommentContent.trim() })
+        .eq('id', commentId);
+      if (error) throw error;
+      setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: editCommentContent.trim() } : c));
+      setEditingCommentId(null);
+    } catch {
+      alert('댓글 수정에 실패했습니다.');
+    } finally {
+      setSavingComment(false);
+    }
+  };
+
   const getTimeAgo = (date: string) => {
     const diff = Date.now() - new Date(date.endsWith('Z') ? date : date + 'Z').getTime();
     const m = Math.floor(diff / 60000);
@@ -152,18 +194,54 @@ export default function BoardDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 11, color: '#555' }}>{getTimeAgo(post.created_at)}</span>
               {user?.id === post.author_id && (
-                <button
-                  onClick={handleDeletePost}
-                  style={{ background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer' }}
-                >
-                  삭제
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => { setEditingPost(true); setEditPostContent(post.content); }}
+                    style={{ background: 'none', border: 'none', color: '#777', fontSize: 12, cursor: 'pointer' }}
+                  >수정</button>
+                  <button
+                    onClick={handleDeletePost}
+                    style={{ background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer' }}
+                  >삭제</button>
+                </div>
               )}
             </div>
           </div>
-          <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: '#E0E0E0', whiteSpace: 'pre-wrap' }}>
-            {post.content}
-          </p>
+          {editingPost ? (
+            <div>
+              <textarea
+                value={editPostContent}
+                onChange={e => setEditPostContent(e.target.value)}
+                maxLength={1000}
+                rows={5}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8, color: '#E0E0E0', fontSize: 15, lineHeight: 1.7,
+                  padding: '10px 12px', resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setEditingPost(false)}
+                  style={{ background: 'none', border: '1px solid #333', color: '#888', borderRadius: 8, padding: '6px 14px', fontSize: 12, cursor: 'pointer' }}
+                >취소</button>
+                <button
+                  onClick={handleEditPost}
+                  disabled={!editPostContent.trim() || savingPost}
+                  style={{
+                    background: !editPostContent.trim() || savingPost ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #8B0000, #5C0029)',
+                    color: !editPostContent.trim() || savingPost ? '#555' : '#fff',
+                    border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600,
+                    cursor: !editPostContent.trim() || savingPost ? 'default' : 'pointer',
+                  }}
+                >{savingPost ? '저장 중...' : '저장'}</button>
+              </div>
+            </div>
+          ) : (
+            <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: '#E0E0E0', whiteSpace: 'pre-wrap' }}>
+              {post.content}
+            </p>
+          )}
         </div>
 
         {/* 댓글 목록 */}
@@ -186,18 +264,54 @@ export default function BoardDetailPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 11, color: '#444' }}>{getTimeAgo(comment.created_at)}</span>
                     {user?.id === comment.author_id && (
-                      <button
-                        onClick={() => handleDeleteComment(comment.id, comment.author_id)}
-                        style={{ background: 'none', border: 'none', color: '#444', fontSize: 11, cursor: 'pointer' }}
-                      >
-                        삭제
-                      </button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          onClick={() => { setEditingCommentId(comment.id); setEditCommentContent(comment.content); }}
+                          style={{ background: 'none', border: 'none', color: '#666', fontSize: 11, cursor: 'pointer' }}
+                        >수정</button>
+                        <button
+                          onClick={() => handleDeleteComment(comment.id, comment.author_id)}
+                          style={{ background: 'none', border: 'none', color: '#444', fontSize: 11, cursor: 'pointer' }}
+                        >삭제</button>
+                      </div>
                     )}
                   </div>
                 </div>
-                <p style={{ fontSize: 14, color: '#ccc', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {comment.content}
-                </p>
+                {editingCommentId === comment.id ? (
+                  <div>
+                    <textarea
+                      value={editCommentContent}
+                      onChange={e => setEditCommentContent(e.target.value)}
+                      maxLength={300}
+                      rows={3}
+                      style={{
+                        width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 8, color: '#ccc', fontSize: 14, lineHeight: 1.6,
+                        padding: '8px 10px', resize: 'none', outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => setEditingCommentId(null)}
+                        style={{ background: 'none', border: '1px solid #333', color: '#777', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer' }}
+                      >취소</button>
+                      <button
+                        onClick={() => handleEditComment(comment.id)}
+                        disabled={!editCommentContent.trim() || savingComment}
+                        style={{
+                          background: !editCommentContent.trim() || savingComment ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #8B0000, #5C0029)',
+                          color: !editCommentContent.trim() || savingComment ? '#555' : '#fff',
+                          border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 11, fontWeight: 600,
+                          cursor: !editCommentContent.trim() || savingComment ? 'default' : 'pointer',
+                        }}
+                      >{savingComment ? '...' : '저장'}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 14, color: '#ccc', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {comment.content}
+                  </p>
+                )}
               </div>
             ))
           )}

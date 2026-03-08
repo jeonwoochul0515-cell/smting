@@ -142,6 +142,32 @@ export default function TalkPage() {
     loadPosts();
   }, [loadPosts]);
 
+  // Realtime subscription for new talk posts
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('talk_posts_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'talk_posts',
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).user_id !== currentUser.id) {
+            loadPosts();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentUser?.id, loadPosts]);
+
   const handleTabSelect = (tab: string) => {
     setActiveTab(tab);
   };

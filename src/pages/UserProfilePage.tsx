@@ -69,6 +69,13 @@ export default function UserProfilePage() {
 
         setUserProfile(targetUser);
         setCurrentUserProfile(myData || null);
+
+        // 프로필 조회 기록 (본인 제외)
+        if (currentUser.id !== userId) {
+          supabase.from('profile_views')
+            .upsert([{ viewer_id: currentUser.id, viewed_id: userId, created_at: new Date().toISOString() }], { onConflict: 'viewer_id,viewed_id' })
+            .then(() => {});
+        }
       } catch (err: any) {
         setError(err.message || '프로필 로드 실패');
       } finally {
