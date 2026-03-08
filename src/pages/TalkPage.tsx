@@ -20,6 +20,7 @@ interface TalkPost {
   user_tendency: string;
   user_gender: string;
   distance_km?: number;
+  like_count: number;
 }
 
 const subTabs = ['전체', '지역', '등네', '근처', '내토크'];
@@ -108,7 +109,19 @@ export default function TalkPage() {
       const profileMap = new Map<string, any>();
       (profilesData || []).forEach(p => profileMap.set(p.id, p));
 
-      // 5. Transform and merge data
+      // 5. Load like counts for all posts in one query
+      const postIds = postsData.map((p: any) => p.id);
+      const { data: likesData } = await supabase
+        .from('talk_likes')
+        .select('post_id')
+        .in('post_id', postIds);
+
+      const likeCountMap = new Map<string, number>();
+      (likesData || []).forEach((l: any) => {
+        likeCountMap.set(l.post_id, (likeCountMap.get(l.post_id) || 0) + 1);
+      });
+
+      // 6. Transform and merge data
       const transformedPosts: TalkPost[] = postsData.map((post: any) => {
         const profile = profileMap.get(post.user_id);
         return {
@@ -125,6 +138,7 @@ export default function TalkPage() {
           distance_km: (myLat && myLng && profile?.latitude && profile?.longitude)
             ? getDistanceKm(myLat, myLng, profile.latitude, profile.longitude)
             : undefined,
+          like_count: likeCountMap.get(post.id) || 0,
         };
       });
 
@@ -271,29 +285,34 @@ export default function TalkPage() {
                     {post.user_age}세
                   </span>
                   {post.distance_km !== undefined && <span>{post.distance_km < 1 ? (post.distance_km * 1000).toFixed(0) + 'm' : post.distance_km.toFixed(1) + 'km'}</span>}
+                  {post.like_count > 0 && (
+                    <span style={{ color: '#8B0000', fontWeight: 600 }}>❤️ {post.like_count}</span>
+                  )}
                 </div>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/chat/${post.user_id}`);
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #8B0000, #5C0029)',
-                  color: '#fff',
-                  fontSize: 11,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  flexShrink: 0,
-                  marginLeft: 8,
-                  boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                쪽지쓰기
-              </button>
+              {post.user_id !== currentUser?.id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/chat/${post.user_id}`);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #8B0000, #5C0029)',
+                    color: '#fff',
+                    fontSize: 11,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    marginLeft: 8,
+                    boxShadow: '0 2px 8px rgba(139,0,0,0.3)',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  쪽지쓰기
+                </button>
+              )}
             </div>
           ))
         )}

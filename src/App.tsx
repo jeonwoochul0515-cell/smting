@@ -31,7 +31,7 @@ import BoardDetailPage from './pages/BoardDetailPage';
 import BoardListPage from './pages/BoardListPage';
 import ProfileViewsPage from './pages/ProfileViewsPage';
 
-const fullScreenPaths = ['/', '/verify', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support', '/profile-views'];
+const fullScreenPaths = ['/', '/auth', '/permissions', '/register', '/profile/edit', '/block-list', '/talk/write', '/talk/:postId', '/privacy', '/terms', '/kane/purchase', '/kane/history', '/notifications', '/support', '/profile-views'];
 
 function App() {
   const location = useLocation();
